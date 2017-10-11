@@ -25,21 +25,21 @@ private:
     double restLength;   /* Rest length of spring (does not have to be initial length) */
 
 public:                  /* Various constructors */
-    Spring(void) {
+    Spring() {
         p0 = new Point;
         p1 = new Point;
         stiffness = 0.0;
         restLength = 0.0;
     }
 
-    Spring(double k) {
+    explicit Spring(double k) {
         p0 = new Point;
         p1 = new Point;
         stiffness = k;
         restLength = 0.0;
     }
 
-    ~Spring(void) {}
+    ~Spring() = default;
 
     void init(Point *_p0, Point *_p1);
 
@@ -54,6 +54,8 @@ public:                  /* Various constructors */
     double getStiffness();
 
     Point *getPoint(int i);     /* Return end point 0 or 1 */
+
+    void applyForce();
 };
 
 #endif

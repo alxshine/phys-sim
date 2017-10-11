@@ -59,3 +59,9 @@ Point *Spring::getPoint(int i) {
     else
         return p0;
 }
+
+void Spring::applyForce() {
+    Vec2 force = (p1->getPos() - p0->getPos()) * stiffness;
+    p0->addForce(force);
+    p1->addForce(-force);
+}

@@ -45,6 +45,34 @@ void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
     switch (method) {
         case Scene::EULER: {
+            /**
+             * The following things need to be calculated:
+             * position for t+h
+             * forces for t
+             * acceleration for t
+             * velocity for t+h
+             */
+
+            for (Point &p : points) {
+                if (!p.isFixed())
+                    p.setPos(p.getPos() + p.getVel() * dt);
+
+                //reset force to gravity
+                p.setForce(Vec2(0, 9.81 * p.getMass()));
+                p.addForce(-p.getVel()*p.getDamping());
+            }
+
+            //add spring force
+            for (Spring &s : springs)
+                s.applyForce();
+
+            for (Point &p : points) {
+                Vec2 a = p.getForce() / p.getMass();
+                Vec2 v = p.getVel() + a * dt;
+                p.setVel(v);
+            }
+
+            //TODO: add collision
             break;
         }
 
