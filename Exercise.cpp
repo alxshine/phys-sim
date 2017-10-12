@@ -71,9 +71,13 @@ void TimeStep(double dt, Scene::Method method,
                 }
             }
 
-            //add spring force
+            /**
+             * Add spring force
+             * We also apply a seperate internal spring damping force, for more realism
+             */
             for (Spring &s : springs) {
                 s.applyForce();
+//                s.applyDamping();
             }
 
             for (Point &p : points) {

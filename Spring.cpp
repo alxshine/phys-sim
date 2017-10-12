@@ -79,4 +79,17 @@ void Spring::applyForce() {
     Vec2 force = dist * (dist.length() - restLength) * stiffness;
     p0->addForce(force);
     p1->addForce(-force);
+
+}
+
+void Spring::applyDamping() {//apply damping force
+    double damping = 4;
+
+    Vec2 dist = p1->getPos() - p0->getPos();
+    Vec2 relMotion = p1->getVel() - p0->getVel();
+
+    double parallelComponent = relMotion.dot(dist.normalize());
+    Vec2 dampingForce = damping * parallelComponent * dist.normalize();
+    p0->addForce(dampingForce);
+    p1->addForce(-dampingForce);
 }

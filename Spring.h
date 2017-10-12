@@ -46,6 +46,8 @@ public:                  /* Various constructors */
     Point *getPoint(int i);     /* Return end point 0 or 1 */
 
     void applyForce();
+
+    void applyDamping();
 };
 
 #endif
