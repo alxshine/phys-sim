@@ -58,21 +58,32 @@ void TimeStep(double dt, Scene::Method method,
                     p.setPos(p.getPos() + p.getVel() * dt);
 
                 //reset force to gravity
-                p.setForce(Vec2(0, 9.81 * p.getMass()));
-                p.addForce(-p.getVel()*p.getDamping());
+                p.setForce(Vec2(0, -9.81 * p.getMass()));
+                p.addForce(-p.getVel() * p.getDamping());
+
+                //calculate penalty force for collision
+                double penaltyStiffness = 1000;
+                double groundHeight = -2;
+                if (p.getPos().y < groundHeight) {
+                    double penetrationDepth = p.getPos().y - groundHeight;
+                    Vec2 penaltyForce = Vec2(0, 1) * penaltyStiffness * -penetrationDepth;
+                    p.addForce(penaltyForce);
+                }
             }
 
             //add spring force
-            for (Spring &s : springs)
+            for (Spring &s : springs) {
                 s.applyForce();
+            }
 
             for (Point &p : points) {
                 Vec2 a = p.getForce() / p.getMass();
                 Vec2 v = p.getVel() + a * dt;
+
                 p.setVel(v);
+
             }
 
-            //TODO: add collision
             break;
         }
 

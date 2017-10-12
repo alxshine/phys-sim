@@ -17,6 +17,20 @@
 #include <GL/freeglut.h>
 
 
+Spring::Spring() {
+    p0 = new Point;
+    p1 = new Point;
+    stiffness = 0.0;
+    restLength = 0.0;
+}
+
+Spring::Spring(double k) {
+    p0 = new Point;
+    p1 = new Point;
+    stiffness = k;
+    restLength = 0.0;
+}
+
 void Spring::init(Point *_p0, Point *_p1) {
     /* Initialize spring with pointers to both mass points */
     p0 = _p0;
@@ -61,7 +75,8 @@ Point *Spring::getPoint(int i) {
 }
 
 void Spring::applyForce() {
-    Vec2 force = (p1->getPos() - p0->getPos()) * stiffness;
+    Vec2 dist = p1->getPos() - p0->getPos();
+    Vec2 force = dist * (dist.length() - restLength) * stiffness;
     p0->addForce(force);
     p1->addForce(-force);
 }

@@ -25,19 +25,9 @@ private:
     double restLength;   /* Rest length of spring (does not have to be initial length) */
 
 public:                  /* Various constructors */
-    Spring() {
-        p0 = new Point;
-        p1 = new Point;
-        stiffness = 0.0;
-        restLength = 0.0;
-    }
+    Spring();
 
-    explicit Spring(double k) {
-        p0 = new Point;
-        p1 = new Point;
-        stiffness = k;
-        restLength = 0.0;
-    }
+    explicit Spring(double k);
 
     ~Spring() = default;
 
