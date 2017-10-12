@@ -32,6 +32,7 @@ Scene::Scene(void) {
     mass = 0.15;
     step = 0.003;
     damping = 0.08;
+    springDamping = 0.5;
     interaction = false;
 
     Init();
@@ -46,13 +47,13 @@ Scene::Scene(int argc, char *argv[]) {
     mass = 0.15;
     step = 0.003;
     damping = 0.08;
+    springDamping = 0.5;
     interaction = false;
 
     /* Check for parameters in command line */
     int arg = 1;
 
     while (arg < argc) {
-        /* Check testcase option */
         if (!strcmp(argv[arg], "-testcase")) {
             arg++;
 
@@ -108,6 +109,12 @@ Scene::Scene(int argc, char *argv[]) {
             arg++;
         }
 
+            /* Check for internal spring damping */
+        else if (!strcmp(argv[arg], "-sprdamp")) {
+            springDamping = (double) atof(argv[++arg]);
+            arg++;
+        }
+
             /* Check for mass */
         else if (!strcmp(argv[arg], "-mass")) {
             mass = (double) atof(argv[++arg]);
@@ -124,10 +131,12 @@ Scene::Scene(int argc, char *argv[]) {
             cerr << "\t-step [step size]" << endl;
             cerr << "\t-stiff [stiffness]" << endl;
             cerr << "\t-damp [damping]" << endl;
+            cerr << "\t-sprdamp [springDamping]" << endl;
             cerr << "\t-mass [mass]" << endl << endl;
             exit(1);
             break;
         }
+        /* Check testcase option */
     }
 
     Init();
@@ -162,7 +171,8 @@ void Scene::PrintSettings(void) {
     cerr << "\t-mass " << mass << endl;
     cerr << "\t-step " << step << endl;
     cerr << "\t-stiff " << stiffness << endl;
-    cerr << "\t-damp " << damping << endl << endl;
+    cerr << "\t-damp " << damping << endl;
+    cerr << "\t-sprdamp " << springDamping << endl << endl;
 }
 
 
@@ -200,13 +210,13 @@ void Scene::Init(void) {
         points.push_back(Point(mass, damping));
 
     /* Allocate the first spring */
-    springs.push_back(Spring(stiffness));
+    springs.push_back(Spring(stiffness, springDamping));
 
     /* For cases with triangle geometry, allocate additional point and springs */
     if (testcase != SPRING) {
         points.push_back(Point(mass, damping));
-        springs.push_back(Spring(stiffness));
-        springs.push_back(Spring(stiffness));
+        springs.push_back(Spring(stiffness, springDamping));
+        springs.push_back(Spring(stiffness, springDamping));
     }
 
     /* Set actual position of first two mass points */

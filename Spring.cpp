@@ -24,11 +24,12 @@ Spring::Spring() {
     restLength = 0.0;
 }
 
-Spring::Spring(double k) {
+Spring::Spring(double k, double d) {
     p0 = new Point;
     p1 = new Point;
     stiffness = k;
     restLength = 0.0;
+    damping = d;
 }
 
 void Spring::init(Point *_p0, Point *_p1) {
@@ -82,9 +83,7 @@ void Spring::applyForce() {
 
 }
 
-void Spring::applyDamping() {//apply damping force
-    double damping = 4;
-
+void Spring::applyDamping() {
     Vec2 dist = p1->getPos() - p0->getPos();
     Vec2 relMotion = p1->getVel() - p0->getVel();
 

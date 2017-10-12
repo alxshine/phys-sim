@@ -23,11 +23,12 @@ private:
     Point *p0, *p1;      /* Pointer to two end points */
     double stiffness;
     double restLength;   /* Rest length of spring (does not have to be initial length) */
-
+    double damping;     /* the internal damping coefficient */
 public:                  /* Various constructors */
+
     Spring();
 
-    explicit Spring(double k);
+    explicit Spring(double k, double d);
 
     ~Spring() = default;
 

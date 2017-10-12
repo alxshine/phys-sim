@@ -17,6 +17,7 @@
 #define __VEC2_H__
 
 #include <cmath>
+#include <iostream>
 
 class Vec2 {
 public:
@@ -83,6 +84,11 @@ public:
 
     Vec2 normalize() const {
         return Vec2(x, y) / Vec2(x, y).length();
+    }
+
+    friend std::ostream &operator<<(std::ostream& output, const Vec2& vec){
+        output << vec.x << "; " << vec.y;
+        return output;
     }
 };
 

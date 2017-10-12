@@ -52,13 +52,15 @@ private:
     double mass;         /* Identical mass for all points */
     double stiffness;    /* Identical spring stiffness for all springs */
     double damping;      /* Identical damping for all points */
+    double springDamping; /* Damping based on internal friction in the springs */
     bool interaction;    /* Toggle for (hard-coded) external force */
 
 protected:
     vector<Point> points;
-    vector<Spring> springs;
 
+    vector<Spring> springs;
 public:
+
     Scene(void);
 
     Scene(int argc, char *argv[]);
@@ -68,10 +70,9 @@ public:
     void Init(void);
 
     void PrintSettings(void);
-
     void Render();       /* Draw scene */
-    void Update();       /* Execute time step */
 
+    void Update();       /* Execute time step */
     double GetStep();    /* Return time step */
     void ToggleUserForce();  /* Toggle external force On/Off */
 };
