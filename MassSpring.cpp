@@ -73,7 +73,7 @@ unsigned long GetTime() {
 *
 *******************************************************************/
 
-void Display(void) {
+void Display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (steps_per_frame > 0) {
@@ -89,7 +89,7 @@ void Display(void) {
 
         timePassed += remTime;
 
-        int steps = (int) (timePassed / scene->GetStep());
+        auto steps = (int) (timePassed / scene->GetStep());
 
         for (int i = 0; i < steps; i++)
             scene->Update();

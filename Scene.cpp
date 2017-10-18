@@ -81,6 +81,7 @@ Scene::Scene(int argc, char *argv[]) {
                 method = SYMPLECTIC;
             } else if (!strcmp(argv[arg], "leapfrog")) {
                 method = LEAPFROG;
+                step /= 2;
             } else if (!strcmp(argv[arg], "midpoint")) {
                 method = MIDPOINT;
             } else {

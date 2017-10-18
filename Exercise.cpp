@@ -28,6 +28,8 @@ using namespace std;
 #include "Point.h"
 #include "Scene.h"
 
+int halfStep = 0;
+int initialized = 0;
 
 /******************************************************************
 *
@@ -101,6 +103,73 @@ void TimeStep(double dt, Scene::Method method,
         }
 
         case Scene::LEAPFROG: {
+            /**
+             * Update velocity for every t+h/2, and position and acceleration for every t
+             * IMPORTANT: because the step time is halved (in MassSpring.cpp), h/2 == dt and h==2*dt
+             */
+            if (halfStep) {
+                //this saves me from using an if (which should be minimally faster)
+                dt += initialized * dt;
+                initialized |= 1;
+
+                for (Point &p : points) {
+                    if (p.isFixed()) {
+                        continue;
+                    }
+
+                    Vec2 a = p.getForce() / p.getMass();
+
+
+                    p.setVel(p.getVel() + dt * a);
+                }
+            } else {
+                /**
+                 * We need to approximate the velocity at the current point in time t.
+                 * In order to not mess our velocity updates up, we need to save and restore the velocity for t-h/2.
+                 */
+                Vec2 oldVelocities[points.size()];
+
+                //update positions
+                for (int i = 0; i < points.size(); i++) {
+                    Point &p = points[i];
+                    p.setPos(p.getPos() + p.getVel() * 2 * dt);
+                    oldVelocities[i] = p.getVel();
+
+                    //approximate velocity
+                    Vec2 a = p.getForce() / p.getMass();
+                    p.setVel(p.getVel() + a * dt);
+
+                    //set forces to gravity
+                    p.setForce(Vec2(0, -9.81) * p.getMass());
+                    p.addForce(-p.getVel() * p.getDamping());
+
+                    //calculate penalty force for collision
+                    double penaltyStiffness = 1000;
+                    double groundHeight = -2;
+                    if (p.getPos().y < groundHeight) {
+                        double penetrationDepth = p.getPos().y - groundHeight;
+                        Vec2 penaltyForce = Vec2(0, 1) * penaltyStiffness * -penetrationDepth;
+                        p.addForce(penaltyForce);
+                    }
+                }
+
+                /**
+                 * Add spring force
+                 * We also apply a seperate internal spring damping force, for more realism
+                 */
+                for (Spring &s : springs) {
+                    s.applyForce();
+                    s.applyDamping();
+                }
+
+                /**
+                 * Restore velocities
+                 */
+                for (int i = 0; i < points.size(); i++)
+                    points[i].setVel(oldVelocities[i]);
+            }
+
+            halfStep = !halfStep;
             break;
         }
 
