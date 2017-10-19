@@ -58,8 +58,6 @@ void TimeStep(double dt, Scene::Method method,
             for (Point &p : points) {
                 if (p.isFixed())
                     continue;
-                //update position
-                p.setPos(p.getPos() + p.getVel() * dt);
 
                 //reset force to gravity
                 p.setForce(Vec2(0, -9.81 * p.getMass()));
@@ -85,8 +83,11 @@ void TimeStep(double dt, Scene::Method method,
             }
 
             for (Point &p : points) {
-                if (p.isFixed())
+                if (p.isFixed()) {
                     continue;
+                }
+                //update position
+                p.setPos(p.getPos() + p.getVel() * dt);
 
                 Vec2 a = p.getForce() / p.getMass();
                 Vec2 v = p.getVel() + a * dt;

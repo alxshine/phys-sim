@@ -32,7 +32,7 @@ Scene::Scene(void) {
     mass = 0.15;
     step = 0.003;
     damping = 0.08;
-    springDamping = 0.5;
+    springDamping = 0;
     interaction = false;
 
     Init();
@@ -47,7 +47,7 @@ Scene::Scene(int argc, char *argv[]) {
     mass = 0.15;
     step = 0.003;
     damping = 0.08;
-    springDamping = 0.5;
+    springDamping = 0;
     interaction = false;
 
     /* Check for parameters in command line */
