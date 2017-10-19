@@ -57,7 +57,7 @@ Scene::Scene(int argc, char *argv[]) {
         if (!strcmp(argv[arg], "-testcase")) {
             arg++;
 
-            if (!strcmp(argv[arg], "spring1D")) {
+            if (!strcmp(argv[arg], "spring")) {
                 testcase = SPRING;
             } else if (!strcmp(argv[arg], "hanging")) {
                 testcase = HANGING;
@@ -81,7 +81,6 @@ Scene::Scene(int argc, char *argv[]) {
                 method = SYMPLECTIC;
             } else if (!strcmp(argv[arg], "leapfrog")) {
                 method = LEAPFROG;
-                step /= 2;
             } else if (!strcmp(argv[arg], "midpoint")) {
                 method = MIDPOINT;
             } else {
@@ -139,6 +138,9 @@ Scene::Scene(int argc, char *argv[]) {
         }
         /* Check testcase option */
     }
+
+    if (method == LEAPFROG)
+        step /= 2;
 
     Init();
     PrintSettings();
