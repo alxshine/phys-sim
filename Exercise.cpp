@@ -45,6 +45,15 @@ int initialized = 0;
 
 void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
+
+//Uncomment to print y-coordinates for the plotting
+/*
+    for(Point &p : points) {
+        if(p.isFixed())
+            continue;
+        printf("%f\n",p.getPos().y );
+    }
+*/
     switch (method) {
         case Scene::EULER: {
             /**
@@ -100,6 +109,58 @@ void TimeStep(double dt, Scene::Method method,
         }
 
         case Scene::SYMPLECTIC: {
+                        /**
+             * The following things need to be calculated:
+             * position for t+h
+             * forces for t
+             * acceleration for t
+             * velocity for t+h
+             * Only Difference from Forward Euler: update positions before calculating
+             * new forces and velocities, only one line to move.
+             */
+
+            for (Point &p : points) {
+                if (p.isFixed())
+                    continue;
+                
+                //update position
+                //this is the difference to forward euler
+                p.setPos(p.getPos() + p.getVel() * dt);
+                //reset force to gravity
+                p.setForce(Vec2(0, -9.81 * p.getMass()));
+                p.addForce(-p.getVel() * p.getDamping());
+
+                //calculate penalty force for collision
+                double penaltyStiffness = 1000;
+                double groundHeight = -2;
+                if (p.getPos().y < groundHeight) {
+                    double penetrationDepth = p.getPos().y - groundHeight;
+                    Vec2 penaltyForce = Vec2(0, 1) * penaltyStiffness * -penetrationDepth;
+                    p.addForce(penaltyForce);
+                }
+            }
+
+            /**
+             * Add spring force
+             * We also apply a seperate internal spring damping force, for more realism
+             */
+            for (Spring &s : springs) {
+                s.applyForce();
+                s.applyDamping();
+            }
+
+            for (Point &p : points) {
+                if (p.isFixed()) {
+                    continue;
+                }
+
+
+                Vec2 a = p.getForce() / p.getMass();
+                Vec2 v = p.getVel() + a * dt;
+
+                p.setVel(v);
+
+            }
             break;
         }
 
