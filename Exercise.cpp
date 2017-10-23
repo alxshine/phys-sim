@@ -47,13 +47,13 @@ void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
 
 //Uncomment to print y-coordinates for the plotting
-/*
+
     for(Point &p : points) {
         if(p.isFixed())
             continue;
         printf("%f\n",p.getPos().y );
     }
-*/
+
     switch (method) {
         //TODO: add user force to all solvers
         case Scene::EULER: {
