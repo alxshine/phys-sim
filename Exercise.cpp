@@ -55,6 +55,7 @@ void TimeStep(double dt, Scene::Method method,
     }
 */
     switch (method) {
+        //TODO: add user force to all solvers
         case Scene::EULER: {
             /**
              * The following things need to be calculated:
