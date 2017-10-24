@@ -28,10 +28,9 @@ using namespace std;
 #include "Point.h"
 #include "Scene.h"
 
-int halfStep = 0;
 int initialized = 0;
 
-void printPoints(const vector<Point> &points);
+void printPoints(vector<Point> &points);
 
 /******************************************************************
 *
@@ -47,7 +46,7 @@ void printPoints(const vector<Point> &points);
 
 void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
-//    printPoints(points);
+    printPoints(points);
 
     switch (method) {
         case Scene::EULER: {
@@ -161,72 +160,40 @@ void TimeStep(double dt, Scene::Method method,
 
         case Scene::LEAPFROG: {
             /**
-             * Update velocity for every t+h/2, and position and acceleration for every t
-             * IMPORTANT: because the step time is halved (in MassSpring.cpp), h/2 == dt and h==2*dt
+             * calculate v(t+h/2) based on a(t)
+             * calculate x(t+h) based on v(t+h/2)
              */
-            if (halfStep) {
-                //this saves me from using an if (which should be minimally faster)
-                dt += initialized * dt;
-                initialized |= 1;
 
-                for (Point &p : points) {
-                    if (p.isFixed()) {
-                        continue;
-                    }
+            for (Point &p : points) {
+                //approximate v(t)
+                Vec2 v_t = p.getVel() + dt / 2 * p.getForce() / p.getMass();
 
-                    Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
-
-
-                    p.setVel(p.getVel() + dt * a);
-                }
-            } else {
-                /**
-                 * We need to approximate the velocity at the current point in time t.
-                 * In order to not mess our velocity updates up, we need to save and restore the velocity for t-h/2.
-                 */
-                Vec2 oldVelocities[points.size()];
-
-                //update positions
-                for (int i = 0; i < points.size(); i++) {
-                    Point &p = points[i];
-                    p.setPos(p.getPos() + p.getVel() * 2 * dt);
-                    oldVelocities[i] = p.getVel();
-
-                    //approximate velocity
-                    Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
-                    p.setVel(p.getVel() + a * dt);
-
-                    //set forces to gravity
-                    p.setForce(Vec2(0, -9.81) * p.getMass());
-                    p.addForce(-p.getVel() * p.getDamping());
-
-                    //calculate penalty force for collision
-                    double penaltyStiffness = 1000;
-                    double groundHeight = -2;
-                    if (p.getPos().y < groundHeight) {
-                        double penetrationDepth = p.getPos().y - groundHeight;
-                        Vec2 penaltyForce = Vec2(0, 1) * penaltyStiffness * -penetrationDepth;
-                        p.addForce(penaltyForce);
-                    }
-                }
-
-                /**
-                 * Add spring force
-                 * We also apply a seperate internal spring damping force, for more realism
-                 */
-                for (Spring &s : springs) {
-                    s.applyForce();
-                    s.applyDamping();
-                }
-
-                /**
-                 * Restore velocities
-                 */
-                for (int i = 0; i < points.size(); i++)
-                    points[i].setVel(oldVelocities[i]);
+                //calculate f(t)
+                p.setForce(Vec2(0, -9.81*p.getMass()));
+                p.addForce(-p.getDamping() * v_t);
             }
 
-            halfStep = !halfStep;
+            for (Spring &s : springs) {
+                s.applyForce();
+                s.applyDamping();
+            }
+
+            for (Point &p: points) {
+                if (p.isFixed())
+                    continue;
+
+                //calculate a(t)
+                Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
+
+                //calculate v(t+h/2)
+                //this also does the initialization
+                p.setVel(p.getVel() + a * (1. + initialized) / 2 * dt);
+
+                //calculate x(t+h)
+                p.setPos(p.getPos() + p.getVel() * dt);
+            }
+            initialized |= 1;
+
             break;
         }
 

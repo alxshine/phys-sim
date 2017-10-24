@@ -139,9 +139,6 @@ Scene::Scene(int argc, char *argv[]) {
         /* Check testcase option */
     }
 
-    if (method == LEAPFROG)
-        step /= 2;
-
     Init();
     PrintSettings();
 }
