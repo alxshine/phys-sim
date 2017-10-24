@@ -31,6 +31,8 @@ using namespace std;
 int halfStep = 0;
 int initialized = 0;
 
+void printPoints(const vector<Point> &points);
+
 /******************************************************************
 *
 * TimeStep
@@ -45,23 +47,15 @@ int initialized = 0;
 
 void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
-
-//Uncomment to print y-coordinates for the plotting
-
-    for(Point &p : points) {
-        if(p.isFixed())
-            continue;
-        printf("%f\n",p.getPos().y );
-    }
+//    printPoints(points);
 
     switch (method) {
-        //TODO: add user force to all solvers
         case Scene::EULER: {
             /**
              * The following things need to be calculated:
-             * position for t+h
              * forces for t
              * acceleration for t
+             * position for t+h
              * velocity for t+h
              */
 
@@ -99,7 +93,7 @@ void TimeStep(double dt, Scene::Method method,
                 //update position
                 p.setPos(p.getPos() + p.getVel() * dt);
 
-                Vec2 a = p.getForce() / p.getMass();
+                Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
                 Vec2 v = p.getVel() + a * dt;
 
                 p.setVel(v);
@@ -110,20 +104,20 @@ void TimeStep(double dt, Scene::Method method,
         }
 
         case Scene::SYMPLECTIC: {
-                        /**
-             * The following things need to be calculated:
-             * position for t+h
-             * forces for t
-             * acceleration for t
-             * velocity for t+h
-             * Only Difference from Forward Euler: update positions before calculating
-             * new forces and velocities, only one line to move.
-             */
+            /**
+ * The following things need to be calculated:
+ * position for t+h
+ * forces for t
+ * acceleration for t
+ * velocity for t+h
+ * Only Difference from Forward Euler: update positions before calculating
+ * new forces and velocities, only one line to move.
+ */
 
             for (Point &p : points) {
                 if (p.isFixed())
                     continue;
-                
+
                 //update position
                 //this is the difference to forward euler
                 p.setPos(p.getPos() + p.getVel() * dt);
@@ -156,7 +150,7 @@ void TimeStep(double dt, Scene::Method method,
                 }
 
 
-                Vec2 a = p.getForce() / p.getMass();
+                Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
                 Vec2 v = p.getVel() + a * dt;
 
                 p.setVel(v);
@@ -180,7 +174,7 @@ void TimeStep(double dt, Scene::Method method,
                         continue;
                     }
 
-                    Vec2 a = p.getForce() / p.getMass();
+                    Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
 
 
                     p.setVel(p.getVel() + dt * a);
@@ -199,7 +193,7 @@ void TimeStep(double dt, Scene::Method method,
                     oldVelocities[i] = p.getVel();
 
                     //approximate velocity
-                    Vec2 a = p.getForce() / p.getMass();
+                    Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
                     p.setVel(p.getVel() + a * dt);
 
                     //set forces to gravity
@@ -243,19 +237,19 @@ void TimeStep(double dt, Scene::Method method,
 
             //Update positions and velocities to half-step
             for (int i = 0; i < points.size(); i++) {
-                Point& p = points[i];
+                Point &p = points[i];
 
                 if (p.isFixed())
                     continue;
 
                 //Compute acceleration at t
-                Vec2 a_t = (p.getForce() - p.getDamping() * p.getVel()) / p.getMass();
+                Vec2 a_t = (p.getForce() + p.getUserForce() - p.getDamping() * p.getVel()) / p.getMass();
 
                 //Compute velocity at t + h/2
-                Vec2 v_temp = p.getVel() + dt/2 * a_t;
+                Vec2 v_temp = p.getVel() + dt / 2 * a_t;
 
                 //Compute position at t + h/2
-                Vec2 x_temp = p.getPos() + dt/2 * p.getVel();
+                Vec2 x_temp = p.getPos() + dt / 2 * p.getVel();
 
                 //Overwrite values in point and save old ones
                 oldVelocities[i] = p.getVel();
@@ -263,9 +257,9 @@ void TimeStep(double dt, Scene::Method method,
 
                 p.setVel(v_temp);
                 p.setPos(x_temp);
-                
+
                 //Reset forces
-                p.setForce(Vec2(0, -9.81 *  p.getMass()));
+                p.setForce(Vec2(0, -9.81 * p.getMass()));
                 p.addForce(-p.getVel() * p.getDamping());
 
                 //Collision penalty
@@ -279,19 +273,19 @@ void TimeStep(double dt, Scene::Method method,
             }
 
             //Add spring forces
-            for (Spring& s : springs) {
+            for (Spring &s : springs) {
                 s.applyForce();
                 s.applyDamping();
             }
 
             //Update positions and velocities for full step
             for (int i = 0; i < points.size(); i++) {
-                Point& p = points[i];                
+                Point &p = points[i];
                 if (p.isFixed())
                     continue;
 
                 //Compute acceleration at t + h/2
-                Vec2 a_temp = (p.getForce() - p.getDamping() * p.getVel()) / p.getMass();
+                Vec2 a_temp = (p.getForce() + p.getUserForce() - p.getDamping() * p.getVel()) / p.getMass();
 
                 //Compute position at t + h
                 Vec2 x = oldPositions[i] + dt * p.getVel();
@@ -304,17 +298,25 @@ void TimeStep(double dt, Scene::Method method,
                 p.setVel(v);
 
                 //Reset forces
-                p.setForce(Vec2(0, -9.81 *  p.getMass()));
+                p.setForce(Vec2(0, -9.81 * p.getMass()));
                 p.addForce(-p.getVel() * p.getDamping());
             }
 
             //Add spring forces again so they are correct at the beginning of the next time step
-            for (Spring& s : springs) {
+            for (Spring &s : springs) {
                 s.applyForce();
             }
 
             break;
         }
     }
-}       
+}
+
+void printPoints(vector<Point> &points) {
+    for (Point &p : points) {
+        if (p.isFixed())
+            continue;
+        printf("%f\n", p.getPos().y);
+    }
+}
 
