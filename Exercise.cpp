@@ -46,7 +46,7 @@ void printPoints(vector<Point> &points);
 
 void TimeStep(double dt, Scene::Method method,
               vector<Point> &points, vector<Spring> &springs, bool interaction) {
-    printPoints(points);
+//    printPoints(points);
 
     switch (method) {
         case Scene::EULER: {
@@ -169,7 +169,7 @@ void TimeStep(double dt, Scene::Method method,
                 Vec2 v_t = p.getVel() + dt / 2 * p.getForce() / p.getMass();
 
                 //calculate f(t)
-                p.setForce(Vec2(0, -9.81*p.getMass()));
+                p.setForce(Vec2(0, -9.81 * p.getMass()));
                 p.addForce(-p.getDamping() * v_t);
             }
 
@@ -186,7 +186,7 @@ void TimeStep(double dt, Scene::Method method,
                 Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
 
                 //calculate v(t+h/2)
-                p.setVel(p.getVel() + a * (1. + initialized) /2 *dt);
+                p.setVel(p.getVel() + a * (1. + initialized) / 2 * dt);
 
                 //calculate x(t+h)
                 p.setPos(p.getPos() + p.getVel() * dt);
