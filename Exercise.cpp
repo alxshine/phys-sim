@@ -186,13 +186,12 @@ void TimeStep(double dt, Scene::Method method,
                 Vec2 a = (p.getForce() + p.getUserForce()) / p.getMass();
 
                 //calculate v(t+h/2)
-                //this also does the initialization
-                p.setVel(p.getVel() + a * (1. + initialized) / 2 * dt);
+                p.setVel(p.getVel() + a * (1. + initialized) /2 *dt);
 
                 //calculate x(t+h)
                 p.setPos(p.getPos() + p.getVel() * dt);
             }
-            initialized |= 1;
+            initialized = 1;
 
             break;
         }
