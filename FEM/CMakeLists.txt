@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 
-include_directories(utils)
+include_directories(utils ${OPENGL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 set(SOURCE_FILES
         utils/HSV2RGB.h
