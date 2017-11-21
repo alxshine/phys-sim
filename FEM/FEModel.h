@@ -70,7 +70,10 @@ public:
     virtual void AddToStiffnessMatrix(int i, int j, double val) 
     {
     	/* The solver expects a lower triangular matrix */
-    	if (j < i)
+        // changed from (j < i), I think this is due to the weird indexing in PS and Lecture notation with
+        // i starting at 1 and j at 0. Now both start at 0 and this allows entries in the diagonal.
+        // Note that non-zero values in the diagonal are required by the solver
+    	if (j <= i)
         	K_matrix(i,j) += val;
     }
 

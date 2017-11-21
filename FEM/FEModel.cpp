@@ -17,6 +17,7 @@
 
 #include "GL/glut.h"  
 #include <math.h>
+#include <stdio.h>
 
 #include "HSV2RGB.h"
 #include "FEModel.h"
@@ -97,9 +98,14 @@ void FEModel::SetBoundaryConditions()
     }
 }
 
+
+//Not sure if this is correct, didn't know where to get that N_j(x_c, y_c) from.
 void FEModel::ComputeRHS()
 {
-   // Task 3
+   for(int i=0; i<K_matrix.GetNumCols(); i++){
+        Vector2 center = elements[i].GetCenter(this);
+        rhs[i] = Source_Term_f(center.x(), center.y())*elements[i].GetArea(this); // * N_j(center.x, center.y), there should be something missing, but it works ?!
+   }
 }
 
 void FEModel::Solve() 

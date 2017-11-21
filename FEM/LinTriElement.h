@@ -35,7 +35,8 @@ public:
         nodeID[2] = node2;
     }
     int GetGlobalID(int elID) const { return nodeID[elID]; }
-
+    double GetArea(FEModel *model) const;
+    Vector2 GetCenter(FEModel *model) const;
     void AssembleElement(FEModel *model) const;
     void ComputeBasisDeriv(int nodeId, Vector2 &basisDeriv, const FEModel *model) const;
 };
