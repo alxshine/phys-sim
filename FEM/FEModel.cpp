@@ -100,12 +100,25 @@ void FEModel::ComputeRHS() {
 	//In theory N_j is only dependent on n_j (it is it's basis function)
 	//but in this practical case, the element (triangle) we are in determines
 	//where to find the correct PART of the basis function (ie. the one for the barycenter of e).
-	//This means we also need to save the basis function for every node in every triangle
-	for (int i = 0; i < K_matrix.GetNumCols(); i++) {
-		Vector2 center = elements[i].GetCenter(this);
-		rhs[i] = Source_Term_f(center.x(), center.y())
-				* elements[i].GetArea(this); // * N_j(center.x, center.y), there should be something missing, but it works ?!
+	//This part of the basis function needed for e is conveniently saved in e.
+	for (unsigned int i = 0; i < rhs.size(); i++)
+		rhs[i] = 0;
+
+	for (unsigned int j = 0; j < nodes.size(); j++) {
+		for (LinTriElement e : elements) {
+			if (e.contains(j)) {
+				Vector2 center = e.GetCenter(this);
+				rhs[j] += Source_Term_f(center.x(), center.y())
+						* e.GetArea(this) * e.evaluateN(this, j);
+			}
+		}
 	}
+
+//	for (int i = 0; i < K_matrix.GetNumCols(); i++) {
+//		Vector2 center = elements[i].GetCenter(this);
+//		rhs[i] = Source_Term_f(center.x(), center.y())
+//				* elements[i].GetArea(this); // * N_j(center.x, center.y), there should be something missing, but it works ?!
+//	}
 }
 
 void FEModel::Solve() {

@@ -21,13 +21,13 @@ double LinTriElement::area = nan("");
 
 //Didn't see a reason to use this function when basis-function coefficients are computed
 // as shown in PS slides
-void LinTriElement::ComputeBasisDeriv(const FEModel *model) const {
+void LinTriElement::ComputeBasisDeriv(const FEModel *model) {
 	//task 1
 
 	//Get (x1,y1), (x2,y2) and (x3,y3)
-	Vector2 pos1 = model->GetNodePosition(this->GetGlobalID(0));
-	Vector2 pos2 = model->GetNodePosition(this->GetGlobalID(1));
-	Vector2 pos3 = model->GetNodePosition(this->GetGlobalID(2));
+	Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
+	Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
+	Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
 
 	//Arrange them in matrix for solving linear equation system as in PS Slides
 	Matrix3x3 positionMat = Matrix3x3();
@@ -43,20 +43,20 @@ void LinTriElement::ComputeBasisDeriv(const FEModel *model) const {
 	positionMat(2, 2) = pos3.y();
 
 	//Solve the system. This only works with unsafe Inversion, maybe not correct...
-	Matrix3x3 coefficents = positionMat.Inverse();
+	coefficients = positionMat.Inverse();
 
 	//read off partial derivatives of basis function.
-	derivatives[0] = Vector2(coefficents(1, 0), coefficents(2, 0));
-	derivatives[1] = Vector2(coefficents(1, 1), coefficents(2, 1));
-	derivatives[2] = Vector2(coefficents(1, 2), coefficents(2, 2));
+	derivatives[0] = Vector2(coefficients(1, 0), coefficients(2, 0));
+	derivatives[1] = Vector2(coefficients(1, 1), coefficients(2, 1));
+	derivatives[2] = Vector2(coefficients(1, 2), coefficients(2, 2));
 }
 
 double LinTriElement::GetArea(FEModel *model) const {
 	//This is a special case optimization for this model, where every triangle has the same area
 	if (isnan(LinTriElement::area)) {
-		Vector2 pos1 = model->GetNodePosition(this->GetGlobalID(0));
-		Vector2 pos2 = model->GetNodePosition(this->GetGlobalID(1));
-		Vector2 pos3 = model->GetNodePosition(this->GetGlobalID(2));
+		Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
+		Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
+		Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
 
 		//shoelace formula
 		LinTriElement::area =
@@ -70,16 +70,16 @@ double LinTriElement::GetArea(FEModel *model) const {
 }
 
 Vector2 LinTriElement::GetCenter(FEModel *model) const {
-	Vector2 pos1 = model->GetNodePosition(this->GetGlobalID(0));
-	Vector2 pos2 = model->GetNodePosition(this->GetGlobalID(1));
-	Vector2 pos3 = model->GetNodePosition(this->GetGlobalID(2));
+	Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
+	Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
+	Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
 
 	return (pos1 + pos2 + pos3) / 3;
 }
 
-void LinTriElement::AssembleElement(FEModel *model) const {
+void LinTriElement::AssembleElement(FEModel *model) {
 	//task 2
-	double area = this->GetArea(model);
+	double area = GetArea(model);
 	ComputeBasisDeriv(model);
 
 	//this is the inner sum of the i,j't entry in the stiffness matrix.
@@ -87,12 +87,30 @@ void LinTriElement::AssembleElement(FEModel *model) const {
 	double val;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			val = (derivatives[i].x() * derivatives[j].x() + derivatives[i].y() * derivatives[j].y()) * area;
+			val = (derivatives[i].x() * derivatives[j].x()
+					+ derivatives[i].y() * derivatives[j].y()) * area;
 
 			//Had to change that function, see definition
-			model->AddToStiffnessMatrix(this->GetGlobalID(i),
-					this->GetGlobalID(j), val);
+			model->AddToStiffnessMatrix(GetGlobalID(i), GetGlobalID(j), val);
 		}
 	}
 }
 
+double LinTriElement::evaluateN(FEModel *model, int globalID) const {
+	//I will use this for some efficiency shenanigans, so check if globalID is contained first
+	int index = -1;
+	for (int i = 0; i < 3; i++) {
+		if (nodeID[i] == globalID) {
+			index = i + 1;
+			break;
+		}
+	}
+
+	if (index < 0)
+		return 0.;
+
+	Vector2 center = GetCenter(model);
+	return coefficients(0, index) + coefficients(1, index) * center.x()
+			+ coefficients(2, index) * center.y();
+
+}
