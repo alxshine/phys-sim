@@ -53,7 +53,7 @@ void LinTriElement::ComputeBasisDeriv(const FEModel *model) {
 
 double LinTriElement::GetArea(FEModel *model) const {
 	//This is a special case optimization for this model, where every triangle has the same area
-	if (isnan(LinTriElement::area)) {
+	if (std::isnan(LinTriElement::area)) {
 		Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
 		Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
 		Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
@@ -70,7 +70,7 @@ double LinTriElement::GetArea(FEModel *model) const {
 }
 
 Vector2 LinTriElement::GetCenter(FEModel *model) {
-	if (isnan(center.x())) {
+	if (std::isnan(center.x())) {
 		Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
 		Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
 		Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
@@ -101,16 +101,12 @@ void LinTriElement::AssembleElement(FEModel *model) {
 }
 
 double LinTriElement::evaluateN(FEModel *model, int globalID) {
-	//I will use this for some efficiency shenanigans, so check if globalID is contained first
-	int index = -1;
-	for (int i = 0; i < 3; i++) {
-		if (nodeID[i] == globalID) {
-			index = i + 1;
+	int index = 0;
+	for (; index < 3; index++)
+		if (nodeID[index] == globalID)
 			break;
-		}
-	}
 
-	if (index < 0)
+	if(index==4)
 		return 0.;
 
 	Vector2 center = GetCenter(model);

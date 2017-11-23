@@ -112,12 +112,6 @@ void FEModel::ComputeRHS() {
 			}
 		}
 	}
-
-//	for (int i = 0; i < K_matrix.GetNumCols(); i++) {
-//		Vector2 center = elements[i].GetCenter(this);
-//		rhs[i] = Source_Term_f(center.x(), center.y())
-//				* elements[i].GetArea(this); // * N_j(center.x, center.y), there should be something missing, but it works ?!
-//	}
 }
 
 void FEModel::Solve() {

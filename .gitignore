@@ -7,3 +7,9 @@ cmake-build-debug/
 */*.o
 FEM
 massSpring
+.project
+.cproject
+.externalToolBuilders
+.settings
+*.o
+
