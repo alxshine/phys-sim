@@ -69,12 +69,16 @@ double LinTriElement::GetArea(FEModel *model) const {
 	return LinTriElement::area;
 }
 
-Vector2 LinTriElement::GetCenter(FEModel *model) const {
-	Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
-	Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
-	Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
+Vector2 LinTriElement::GetCenter(FEModel *model) {
+	if (isnan(center.x())) {
+		Vector2 pos1 = model->GetNodePosition(GetGlobalID(0));
+		Vector2 pos2 = model->GetNodePosition(GetGlobalID(1));
+		Vector2 pos3 = model->GetNodePosition(GetGlobalID(2));
 
-	return (pos1 + pos2 + pos3) / 3;
+		center = (pos1 + pos2 + pos3) / 3;
+	}
+
+	return center;
 }
 
 void LinTriElement::AssembleElement(FEModel *model) {
@@ -96,7 +100,7 @@ void LinTriElement::AssembleElement(FEModel *model) {
 	}
 }
 
-double LinTriElement::evaluateN(FEModel *model, int globalID) const {
+double LinTriElement::evaluateN(FEModel *model, int globalID) {
 	//I will use this for some efficiency shenanigans, so check if globalID is contained first
 	int index = -1;
 	for (int i = 0; i < 3; i++) {

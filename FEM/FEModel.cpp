@@ -91,7 +91,6 @@ void FEModel::SetBoundaryConditions() {
 void FEModel::ComputeRHS() {
 	// task 3
 
-	//this is incorrect
 	//what we need to do is:
 	// - initialize rhs with zeroes
 	// - for every node n_j, check every triangle e if it contains n_j

@@ -30,6 +30,7 @@ private:
 	static double area;
 	Matrix3x3 coefficients;
 	Vector2 derivatives[3] = { Vector2(nan(""), nan("")) };
+	Vector2 center = Vector2(nan(""), nan(""));
 
 public:
 	LinTriElement(int node0, int node1, int node2) {
@@ -47,10 +48,10 @@ public:
 		return false;
 	}
 	double GetArea(FEModel *model) const;
-	Vector2 GetCenter(FEModel *model) const;
+	Vector2 GetCenter(FEModel *model);
 	void AssembleElement(FEModel *model);
 	void ComputeBasisDeriv(const FEModel *model);
-	double evaluateN(FEModel *model, int globalID) const;
+	double evaluateN(FEModel *model, int globalID);
 };
 
 #endif
