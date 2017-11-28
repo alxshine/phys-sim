@@ -143,6 +143,15 @@ double FEModel::ComputeError() {
 		abserror[i] = fabs(abserror[i]);
 
 	/* Compute inner product error norm:  err = sqrt(v*K*v) */
+	//K*v
+	std::vector<double> kv(abserror.size());
+	K_matrix.MultVector(abserror, kv);
+
+	//v*(K*v)
+	for (unsigned i = 0; i < kv.size(); i++) {
+		err_nrm = abserror[i] * kv[i];
+	}
+	err_nrm = sqrt(err_nrm);
 
 	// Task 4
 	return err_nrm;
