@@ -56,10 +56,30 @@ void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
 void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 		double* pressure, double* divergence) {
 // Task 2
+	double h = 1.0 / xRes;
+
+	for (int i = 0; i < iterations; i++) {
+		for (int y = 0; y < yRes; y++) {
+			for (int x = 0; x < xRes; x++) {
+				int c = y * xRes +x;
+				pressure[c] = (h * h * divergence[c] + pressure[c + xRes] + pressure[c - xRes] + pressure[c + x] + pressure[c - x]) / 4;	
+			}
+		}
+	}
+	//TODO: add break on achieved accuracy
 }
 
 void CorrectVelocities(int xRes, int yRes, double dt, const double* pressure,
 		double* xVelocity, double* yVelocity) {
 // Task 3
+	double h = 1.0 / xRes;
+	for (int y = 0; y < yRes; y++) {
+		for (int x = 0; x < xRes; x++) {
+			int c = y * xRes + x;
+
+			xVelocity[c] = xVelocity[c] - dt * (1 / h * (pressure[c] - pressure[c - 1]));
+			yVelocity[c] = yVelocity[c] - dt * (1 / h * (pressure[c] - pressure[c - xRes]));
+		}
+	}
 }
 
