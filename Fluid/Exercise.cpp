@@ -24,9 +24,11 @@ void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
 	// Task 1
 	for (int y = 0; y < yRes; y++) {
 		for (int x = 0; x < xRes; x++) {
+			int coord = y * xRes + x;
+
 			//calculate old position based on current velocity
-			double oldX = x - xVelocity[y * xRes + x] * dt;
-			double oldY = y - yVelocity[y * xRes + x] * dt;
+			double oldX = x - xVelocity[coord] * dt * xRes;
+			double oldY = y - yVelocity[coord] * dt * yRes;
 
 			//interpolate quantity from neighbors of old coordinates
 			int leftCoord = (int) oldX;
@@ -34,10 +36,10 @@ void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
 			int bottomCoord = (int) oldY;
 			int topCoord = bottomCoord + 1;
 
-			double bottomLeft = tempField[bottomCoord * xRes + leftCoord];
-			double bottomRight = tempField[bottomCoord * xRes + rightCoord];
-			double topLeft = tempField[topCoord * xRes + leftCoord];
-			double topRight = tempField[topCoord * xRes + rightCoord];
+			double bottomLeft = field[bottomCoord * xRes + leftCoord];
+			double bottomRight = field[bottomCoord * xRes + rightCoord];
+			double topLeft = field[topCoord * xRes + leftCoord];
+			double topRight = field[topCoord * xRes + rightCoord];
 
 			double xRatio = oldX - leftCoord;
 			double yRatio = oldY - bottomCoord;
@@ -47,7 +49,7 @@ void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
 			double rightInterpolation = topRight * yRatio
 					+ bottomRight * (1 - yRatio);
 
-			field[y * xRes + x] = rightInterpolation * xRatio
+			tempField[coord] = rightInterpolation * xRatio
 					+ leftInterpolation * (1 - xRatio);
 		}
 	}
@@ -61,8 +63,11 @@ void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 	for (int i = 0; i < iterations; i++) {
 		for (int y = 0; y < yRes; y++) {
 			for (int x = 0; x < xRes; x++) {
-				int c = y * xRes +x;
-				pressure[c] = (h * h * divergence[c] + pressure[c + xRes] + pressure[c - xRes] + pressure[c + x] + pressure[c - x]) / 4;	
+				int c = y * xRes + x;
+				pressure[c] =
+						(h * h * divergence[c] + pressure[c + xRes]
+								+ pressure[c - xRes] + pressure[c + x]
+								+ pressure[c - x]) / 4;
 			}
 		}
 	}
@@ -77,8 +82,10 @@ void CorrectVelocities(int xRes, int yRes, double dt, const double* pressure,
 		for (int x = 0; x < xRes; x++) {
 			int c = y * xRes + x;
 
-			xVelocity[c] = xVelocity[c] - dt * (1 / h * (pressure[c] - pressure[c - 1]));
-			yVelocity[c] = yVelocity[c] - dt * (1 / h * (pressure[c] - pressure[c - xRes]));
+			xVelocity[c] = xVelocity[c]
+					- dt * (1 / h * (pressure[c] - pressure[c - 1]));
+			yVelocity[c] = yVelocity[c]
+					- dt * (1 / h * (pressure[c] - pressure[c - xRes]));
 		}
 	}
 }
