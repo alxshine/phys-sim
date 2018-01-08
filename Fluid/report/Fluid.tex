@@ -1,0 +1,58 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+    
+\documentclass[11pt]{article}
+
+
+
+\author{Maximilian Mayerl, Alexander Schl\"ogl, Benedikt Wimmer}
+\title{Assignment 3, Report}
+
+\begin{document}
+
+
+\maketitle
+
+
+
+    
+\section{Implementation}\label{implementation}
+
+
+
+\subsection{Task 1 - Semi-Lagrangian Advection}\label{forward-euler}
+
+For solving the advection we need to calculate the quantities for the current step, for each node. This is done as follows:
+
+\begin{enumerate}
+	\item Calculate the old coordinate by subtracting $v\cdot \triangle t$
+	\item Determine the four surrounding nodes in the grid
+	\item Interpolate their quantity values
+\end{enumerate}
+
+\noindent The new values are then stored in the \texttt{*tempField} variable.
+
+\subsection{Task 2 - Gauss-Seidel Solver}
+
+We implement the Gauss-Seidel method exactly as described on the lecture slides. It is pretty simple since all calculations are done on the same pressure field, using old values as initialization and combining the four surrounding values to a new one. We calculate the residual after each step and stop iterating after it is below the accuracy threshold.
+
+
+
+\subsection{Task 3 - Velocity Update}
+
+We implement the component-wise velocity update exactly as described on the lecture slides. The new velocities are calculated from the old velocities and the new pressure field like:
+
+$$v^{n+1}_{x} = v^{n}_{x} -\triangle t(\frac{1}{h}(p^{n+1}(i,j) - p^{n+1}(i-1,j)))$$
+
+$$v^{n+1}_{y} = v^{n}_{y} -\triangle t(\frac{1}{h}(p^{n+1}(i,j) - p^{n+1}(i,j-1)))$$
+
+    
+    
+\end{document}
