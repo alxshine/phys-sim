@@ -42,6 +42,10 @@ For solving the advection we need to calculate the quantities for the current st
 \subsection{Task 2 - Gauss-Seidel Solver}
 
 We implement the Gauss-Seidel method exactly as described on the lecture slides. It is pretty simple since all calculations are done on the same pressure field, using old values as initialization and combining the four surrounding values to a new one. We calculate the residual after each step and stop iterating after it is below the accuracy threshold.
+We calculate the residual in a second pass because we were unsure whether the incomplete computation of the pressure field matters too much to do it in one pass.
+The only problem would be the solver ending prematurely with the actual field not having the desired accuracy.
+In practice the decreased computation time combined with the (possibly) required higher accuracy (a lower accuracy threshold) is still better than doing two passes.
+For this exercise it should be fine as it is, however.
 
 
 
