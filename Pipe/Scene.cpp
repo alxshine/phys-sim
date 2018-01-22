@@ -115,7 +115,6 @@ void Scene::Render(void) {
 		double locY = bottomBorder + yStep * j;
 		for (int i = 0; i < resolutionX; i++) {
 			double locX = leftBorder + xStep * i;
-			//maybe switch the grid to store vectors?
 			Vec2 currentVel = vel[j * resolutionX + i];
 			if (currentVel.isZero())
 				continue;
@@ -132,7 +131,7 @@ void Scene::Render(void) {
 			//draw the head for the arrow
 			Vec2 direction = currentVel.normalize();
 			Vec2 headStart = arrowEnd - direction * 0.04;
-			double offsetX, offsetY;
+			double offsetX = 0, offsetY = 0;
 			if (direction.y == 0 && direction.x == 0) {
 				//leave the offset 0
 			} else if (direction.y == 0) {
