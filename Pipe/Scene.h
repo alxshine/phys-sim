@@ -36,7 +36,8 @@ using namespace std;
 class Scene {
 private:
 	int resolutionX, resolutionY;
-//	vector<double> gridX, gridY;
+	double boundarySpeed;
+	vector<Vec2> vel;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
 

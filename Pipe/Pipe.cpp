@@ -42,8 +42,6 @@ void Display() {
 }
 
 void Init(void) {
-	scene = Scene();
-
 	/* Set background (clear) color to black */
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 
