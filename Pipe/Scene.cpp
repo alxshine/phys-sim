@@ -28,8 +28,8 @@ Scene::Scene(void) {
 	rightBorder = 2;
 	crossHalfLength = 0.02;
 	boundarySpeed = 2;
-	pZero = 10.0;
-	boundaryPressure = pZero - 0.5*boundarySpeed*boundarySpeed;
+	pZero = 10.0;	//Magic number, this is the maximum pressure, achieved at points with 0 velocity
+	boundaryPressure = pZero - 0.5*boundarySpeed*boundarySpeed; // simplified bernoulli: p + 0.5*velocity^2 = pZero
 
 	Init();
 	PrintSettings();
@@ -79,7 +79,7 @@ void Scene::Update(){
 void Scene::Solve(int iterations) {
 
 	for (int i = 0; i < iterations; i++) {
-		SolvePressure(20);
+		SolvePressure(1000);
 		UpdateVelocity();
 		ComputeDivergence();
 	}
@@ -179,16 +179,22 @@ void Scene::SolvePressure(int iterations) {
 
 	for (int i = 0; i < iterations; i++) {
 		//solver iteration
-		for (int y = 0; y < resolutionY; y++) {
-			for (int x = 0; x < resolutionX; x++) {
+		// Don't loop over pipe boundaries, they are constant
+		for (int y = 1; y < resolutionY-1; y++) {
+			for (int x = 1; x < resolutionX-1; x++) {
 				int c = y * resolutionX + x;
 				//handle boundaries
-				double above = y < resolutionY - 1 ? pressure[c + resolutionX] : pZero;
+/*				double above = y < resolutionY - 1 ? pressure[c + resolutionX] : pZero;
 				double below = y > 0 ? pressure[c - resolutionX] : pZero;
 				double left = x > 0 ? pressure[c - 1] : boundaryPressure;
-				double right = x < resolutionX - 1 ? pressure[c + 1] : boundaryPressure;
+				double right = x < resolutionX - 1 ? pressure[c + 1] : boundaryPressure;*/
 
+				double above = pressure[c + resolutionX];
+				double below = pressure[c - resolutionX];
+				double left = pressure[c - 1];
+				double right = pressure[c + 1];
 
+				//cout << divergence[c] << endl;
 				pressure[c] = (h * h * divergence[c] + above + below + left
 						+ right) / 4;
 			}
@@ -200,22 +206,24 @@ void Scene::SolvePressure(int iterations) {
 void Scene::UpdateVelocity(void) {
 
 	double h = 1.0 / resolutionX;
-	for (int y = 0; y < resolutionY; y++) {
-		for (int x = 0; x < resolutionX; x++) {
+	//Don't loop over pipe boundaries, they are constant
+	for (int y = 1; y < resolutionY-1; y++) {
+		for (int x = 1; x < resolutionX-1; x++) {
 			int c = y * resolutionX + x;
+
+			//Not sure about this part. The idea was to get a velocity change in 
+			// X and Y direction with the method from EX 3 (questionable approach :) ) 
+			// and scale it to the length of the velocity vector, which we get from the
+			// bernoulli equation.
 
 			double xVel = -(1 / h * (pressure[c] - pressure[c - 1]));
 			double yVel = -(1 / h * (pressure[c] - pressure[c - resolutionX]));
 
-			
 			Vec2 velTemp = Vec2(xVel, yVel).normalize();
+			// don't allow pressures > pZero
+			double pressureDiff = pZero - pressure[c] > 0 ? pZero - pressure[c] : 0.0;
 
-
-
-			velTemp = velTemp * sqrt(abs(pZero - pressure[c])) * 2;
-
-
-
+			velTemp = velTemp * sqrt(pressureDiff) * 2;
 			vel[c] = velTemp;
 
 		}
@@ -224,16 +232,16 @@ void Scene::UpdateVelocity(void) {
 }
 
 void Scene::ComputeDivergence(void) {
-	const double dx = 1.0 / resolutionX;
-	const double idtx = 1.0 / (2.0 * (dx * dx));
+
+	//copied from EX 3, but changed to proper definition of divergence with gradient * velocity_vector
 
 	for (int y = 1; y < resolutionY - 1; y++)
 		for (int x = 1; x < resolutionX - 1; x++) {
 			const int index = y * resolutionX + x;
 			const double xComponent = (vel[index + 1].x
-					- vel[index - 1].x) * idtx;
+					- vel[index - 1].x) * vel[index].x;
 			const double yComponent = (vel[index + resolutionX].y
-					- vel[index - resolutionX].y) * idtx;
+					- vel[index - resolutionX].y) * vel[index].y;
 			divergence[index] = -(xComponent + yComponent);
 		}
 }

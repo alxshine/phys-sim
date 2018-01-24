@@ -28,7 +28,7 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Simulate() {
-	scene.Solve(20);
+	scene.Solve(100);
 }
 
 void Display() {
@@ -40,7 +40,9 @@ void Display() {
 
 	glutPostRedisplay();
 	glutSwapBuffers();
-	sleep(5);
+
+	//prevent it from looping nonstop
+	sleep(1);
 }
 
 void Init(void) {
