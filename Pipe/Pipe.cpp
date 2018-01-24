@@ -11,6 +11,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
+#include <unistd.h>
 
 Scene scene;
 
@@ -27,7 +28,7 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Simulate() {
-
+	scene.Solve(20);
 }
 
 void Display() {
@@ -39,6 +40,7 @@ void Display() {
 
 	glutPostRedisplay();
 	glutSwapBuffers();
+	sleep(5);
 }
 
 void Init(void) {

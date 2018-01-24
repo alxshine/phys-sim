@@ -37,9 +37,13 @@ class Scene {
 private:
 	int resolutionX, resolutionY;
 	double boundarySpeed;
+	double boundaryPressure;
 	vector<Vec2> vel;
+	vector<double> pressure;
+	vector<double> divergence;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
+	double pZero;
 
 	void drawGridPoint(double locX, double locY);
 
@@ -57,6 +61,14 @@ public:
 	void Render(); /* Draw scene */
 
 	void Update(); /* Execute time step */
+
+	void Solve(int iterations);
+	void SolvePressure(int iterations);
+
+	void UpdateVelocity(void);
+
+	void ComputeDivergence(void);
+
 };
 
 #endif

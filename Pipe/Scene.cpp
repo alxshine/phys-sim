@@ -28,6 +28,8 @@ Scene::Scene(void) {
 	rightBorder = 2;
 	crossHalfLength = 0.02;
 	boundarySpeed = 2;
+	pZero = 10.0;
+	boundaryPressure = pZero - 0.5*boundarySpeed*boundarySpeed;
 
 	Init();
 	PrintSettings();
@@ -57,15 +59,31 @@ void Scene::PrintSettings(void) {
 
 void Scene::Init(void) {
 	vel.reserve(resolutionX * resolutionY);
+	pressure.reserve(resolutionX * resolutionY);
+	divergence.reserve(resolutionX * resolutionY);
 
 	//set border velocities
 	for (int i = 1; i < resolutionY - 1; i++) {
 		vel[i * resolutionX] = Vec2(boundarySpeed, 0);
 		vel[(i + 1) * resolutionX - 1] = Vec2(boundarySpeed, 0);
+		pressure[i * resolutionX] = boundaryPressure;
+		pressure[(i+1) * resolutionX -1] = boundaryPressure;
 	}
 }
 
-void Scene::Update(void) {
+
+void Scene::Update(){
+
+}
+
+void Scene::Solve(int iterations) {
+
+	for (int i = 0; i < iterations; i++) {
+		SolvePressure(20);
+		UpdateVelocity();
+		ComputeDivergence();
+	}
+
 }
 
 void Scene::drawGridPoint(double locX, double locY) {
@@ -153,4 +171,69 @@ void Scene::Render(void) {
 			glEnd();
 		}
 	}
+}
+
+void Scene::SolvePressure(int iterations) {
+
+	double h = 1.0 / resolutionX;
+
+	for (int i = 0; i < iterations; i++) {
+		//solver iteration
+		for (int y = 0; y < resolutionY; y++) {
+			for (int x = 0; x < resolutionX; x++) {
+				int c = y * resolutionX + x;
+				//handle boundaries
+				double above = y < resolutionY - 1 ? pressure[c + resolutionX] : pZero;
+				double below = y > 0 ? pressure[c - resolutionX] : pZero;
+				double left = x > 0 ? pressure[c - 1] : boundaryPressure;
+				double right = x < resolutionX - 1 ? pressure[c + 1] : boundaryPressure;
+
+
+				pressure[c] = (h * h * divergence[c] + above + below + left
+						+ right) / 4;
+			}
+		}
+	}
+
+}
+
+void Scene::UpdateVelocity(void) {
+
+	double h = 1.0 / resolutionX;
+	for (int y = 0; y < resolutionY; y++) {
+		for (int x = 0; x < resolutionX; x++) {
+			int c = y * resolutionX + x;
+
+			double xVel = -(1 / h * (pressure[c] - pressure[c - 1]));
+			double yVel = -(1 / h * (pressure[c] - pressure[c - resolutionX]));
+
+			
+			Vec2 velTemp = Vec2(xVel, yVel).normalize();
+
+
+
+			velTemp = velTemp * sqrt(abs(pZero - pressure[c])) * 2;
+
+
+
+			vel[c] = velTemp;
+
+		}
+	}
+
+}
+
+void Scene::ComputeDivergence(void) {
+	const double dx = 1.0 / resolutionX;
+	const double idtx = 1.0 / (2.0 * (dx * dx));
+
+	for (int y = 1; y < resolutionY - 1; y++)
+		for (int x = 1; x < resolutionX - 1; x++) {
+			const int index = y * resolutionX + x;
+			const double xComponent = (vel[index + 1].x
+					- vel[index - 1].x) * idtx;
+			const double yComponent = (vel[index + resolutionX].y
+					- vel[index - resolutionX].y) * idtx;
+			divergence[index] = -(xComponent + yComponent);
+		}
 }
