@@ -18,6 +18,7 @@ using namespace std;
 
 /* Local includes */
 #include "Scene.h"
+#include "Fluid2D.h"
 
 Scene::Scene(void) {
 	resolutionX = 20;
@@ -27,9 +28,7 @@ Scene::Scene(void) {
 	leftBorder = -2;
 	rightBorder = 2;
 	crossHalfLength = 0.02;
-	boundarySpeed = 2;
-	pZero = 10.0;	//Magic number, this is the maximum pressure, achieved at points with 0 velocity
-	boundaryPressure = pZero - 0.5*boundarySpeed*boundarySpeed; // simplified bernoulli: p + 0.5*velocity^2 = pZero
+
 
 	Init();
 	PrintSettings();
@@ -59,16 +58,9 @@ void Scene::PrintSettings(void) {
 
 void Scene::Init(void) {
 	vel.reserve(resolutionX * resolutionY);
-	pressure.reserve(resolutionX * resolutionY);
-	divergence.reserve(resolutionX * resolutionY);
 
-	//set border velocities
-	for (int i = 1; i < resolutionY - 1; i++) {
-		vel[i * resolutionX] = Vec2(boundarySpeed, 0);
-		vel[(i + 1) * resolutionX - 1] = Vec2(boundarySpeed, 0);
-		pressure[i * resolutionX] = boundaryPressure;
-		pressure[(i+1) * resolutionX -1] = boundaryPressure;
-	}
+
+
 }
 
 
@@ -78,11 +70,19 @@ void Scene::Update(){
 
 void Scene::Solve(int iterations) {
 
-	for (int i = 0; i < iterations; i++) {
-		SolvePressure(1000);
-		UpdateVelocity();
-		ComputeDivergence();
+	Fluid_2D fluid (resolutionX, resolutionY);
+
+	fluid.step();
+
+	double* xVel = fluid.get_xVelocity();
+	double* yVel = fluid.get_yVelocity();
+
+	for (int i = 0; i < resolutionX*resolutionY; i++){
+		vel[i].x = xVel[i];
+		vel[i].y = yVel[i];
 	}
+
+
 
 }
 
