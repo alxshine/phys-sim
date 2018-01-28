@@ -109,19 +109,12 @@ Fluid_2D::~Fluid_2D() {
 
 /*----------------------------------------------------------------*/
 
-
-
-
 /*------------------------------------------------------------------
  | Time step for solving the Euler flow equations using operator
  | splitting
  ------------------------------------------------------------------*/
 
 void Fluid_2D::step() {
-
-
-
-
 
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
 			xVelocityTemp);
@@ -134,32 +127,19 @@ void Fluid_2D::step() {
 	/* Solve for pressure, ensuring divergence-free velocity field */
 	solvePressure();
 
-
-
 	totalSteps++;
 }
 
 /*----------------------------------------------------------------*/
 
-
-
-
-
-
-
 /*----------------------------------------------------------------*/
 
 void Fluid_2D::solvePressure() {
 	/* Set appropriate boundary condition - open vs. closed domain */
-	if (bndryCond) {
-		setZeroY(yVelocity);
-		setZeroX(xVelocity);
-	} else {
-		setNeumannX(xVelocity);
-		setNeumannY(yVelocity);
-		setZeroY(xVelocity);
-		setZeroX(yVelocity);
-	}
+//	setNeumannX(xVelocity);
+	setNeumannY(yVelocity);
+	setZeroY(xVelocity);
+//	setZeroX(yVelocity);
 
 	/* Compute velocity field divergence */
 	computeDivergence();
@@ -192,8 +172,6 @@ void Fluid_2D::copyFields() {
 	memcpy(xVelocity, xVelocityTemp, size);
 	memcpy(yVelocity, yVelocityTemp, size);
 }
-
-
 
 /*----------------------------------------------------------------*/
 

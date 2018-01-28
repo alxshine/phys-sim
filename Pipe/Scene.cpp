@@ -211,11 +211,6 @@ void Scene::UpdateVelocity(void) {
 		for (int x = 1; x < resolutionX-1; x++) {
 			int c = y * resolutionX + x;
 
-			//Not sure about this part. The idea was to get a velocity change in 
-			// X and Y direction with the method from EX 3 (questionable approach :) ) 
-			// and scale it to the length of the velocity vector, which we get from the
-			// bernoulli equation.
-
 			double xVel = -(1 / h * (pressure[c] - pressure[c - 1]));
 			double yVel = -(1 / h * (pressure[c] - pressure[c - resolutionX]));
 
