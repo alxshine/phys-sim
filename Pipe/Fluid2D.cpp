@@ -34,7 +34,7 @@ extern void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 extern void CorrectVelocities(int xRes, int yRes, double dt,
 		const double* pressure, double* xVelocity, double* yVelocity);
 
-Fluid_2D::Fluid_2D(int _xRes, int _yRes) :
+Fluid2D::Fluid2D(int _xRes, int _yRes) :
 		xRes(_xRes), yRes(_yRes) {
 	dt = 0.1; /* Time step */
 	totalSteps = 0;
@@ -78,7 +78,7 @@ Fluid_2D::Fluid_2D(int _xRes, int _yRes) :
 	}
 }
 
-Fluid_2D::~Fluid_2D() {
+Fluid2D::~Fluid2D() {
 	if (density)
 		delete[] density;
 	if (densityTemp)
@@ -114,7 +114,7 @@ Fluid_2D::~Fluid_2D() {
  | splitting
  ------------------------------------------------------------------*/
 
-void Fluid_2D::step() {
+void Fluid2D::step(vector<int> zeroBlocks) {
 
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
 			xVelocityTemp);
@@ -123,6 +123,22 @@ void Fluid_2D::step() {
 
 	/* Copy/update advected fields */
 	copyFields();
+
+	/* Zero the correct blocks */
+	for (int index : zeroBlocks) {
+		int x = index % xRes;
+		int y = index / xRes;
+
+		xVelocity[y*xRes + x] = 0;
+		xVelocity[y*xRes + x + 1] = 0;
+		xVelocity[(y+1)*xRes + x] = 0;
+		xVelocity[(y+1)*xRes + x + 1] = 0;
+
+		yVelocity[y*xRes + x] = 0;
+		yVelocity[y*xRes + x + 1] = 0;
+		yVelocity[(y+1)*xRes + x] = 0;
+		yVelocity[(y+1)*xRes + x + 1] = 0;
+	}
 
 	/* Solve for pressure, ensuring divergence-free velocity field */
 	solvePressure();
@@ -134,12 +150,17 @@ void Fluid_2D::step() {
 
 /*----------------------------------------------------------------*/
 
-void Fluid_2D::solvePressure() {
-	/* Set appropriate boundary condition - open vs. closed domain */
-//	setNeumannX(xVelocity);
-	setNeumannY(yVelocity);
+void Fluid2D::solvePressure() {
+	/* Set appropriate boundary conditions, we use zero slip */
+	setZeroY(yVelocity);
 	setZeroY(xVelocity);
-//	setZeroX(yVelocity);
+
+	//test what happens when zeroing a certain cell
+//	int zeroIndices[] = {52, 53, 72, 73, 112, 113, 132, 133};
+//	for(int i =0; i<4; i++){
+//		yVelocity[zeroIndices[i]] = 0;
+//		xVelocity[zeroIndices[i]] = 0;
+//	}
 
 	/* Compute velocity field divergence */
 	computeDivergence();
@@ -152,7 +173,7 @@ void Fluid_2D::solvePressure() {
 	CorrectVelocities(xRes, yRes, dt, pressure, xVelocity, yVelocity);
 }
 
-void Fluid_2D::computeDivergence() {
+void Fluid2D::computeDivergence() {
 	const double dx = 1.0 / xRes;
 	const double idtx = 1.0 / (2.0 * (dt * dx));
 
@@ -167,7 +188,7 @@ void Fluid_2D::computeDivergence() {
 		}
 }
 
-void Fluid_2D::copyFields() {
+void Fluid2D::copyFields() {
 	int size = totalCells * sizeof(double);
 	memcpy(xVelocity, xVelocityTemp, size);
 	memcpy(yVelocity, yVelocityTemp, size);
@@ -175,7 +196,7 @@ void Fluid_2D::copyFields() {
 
 /*----------------------------------------------------------------*/
 
-void Fluid_2D::setNeumannX(double* field) {
+void Fluid2D::setNeumannX(double* field) {
 	for (int y = 0; y < yRes; y++) {
 		int index = y * xRes;
 		field[index] = field[index + 1];
@@ -183,7 +204,7 @@ void Fluid_2D::setNeumannX(double* field) {
 	}
 }
 
-void Fluid_2D::setNeumannY(double* field) {
+void Fluid2D::setNeumannY(double* field) {
 	for (int x = 0; x < xRes; x++) {
 		int index = x;
 		field[index] = field[index + xRes];
@@ -193,7 +214,7 @@ void Fluid_2D::setNeumannY(double* field) {
 	}
 }
 
-void Fluid_2D::setZeroX(double* field) {
+void Fluid2D::setZeroX(double* field) {
 	for (int y = 0; y < yRes; y++) {
 		int index = y * xRes;
 		field[index] = 0.0;
@@ -201,7 +222,7 @@ void Fluid_2D::setZeroX(double* field) {
 	}
 }
 
-void Fluid_2D::setZeroY(double* field) {
+void Fluid2D::setZeroY(double* field) {
 	for (int x = 0; x < xRes; x++) {
 		int index = x;
 		field[index] = 0.0;
@@ -211,7 +232,7 @@ void Fluid_2D::setZeroY(double* field) {
 	}
 }
 
-void Fluid_2D::copyBorderX(double* field) {
+void Fluid2D::copyBorderX(double* field) {
 	for (int y = 0; y < yRes; y++) {
 		int index = y * xRes;
 		field[index] = field[index + 1];
@@ -219,7 +240,7 @@ void Fluid_2D::copyBorderX(double* field) {
 	}
 }
 
-void Fluid_2D::copyBorderY(double* field) {
+void Fluid2D::copyBorderY(double* field) {
 	for (int x = 0; x < xRes; x++) {
 		int index = x;
 		field[index] = field[index + xRes];

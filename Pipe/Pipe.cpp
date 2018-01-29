@@ -28,7 +28,7 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Simulate() {
-	scene.Solve(100);
+	scene.Solve(1);
 }
 
 void Display() {

@@ -26,12 +26,13 @@
 #include <iostream>
 
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
-#include "Spring.h"
 #include "Point.h"
 #include "Vec2.h"
+#include "Fluid2D.h"
 
 class Scene {
 private:
@@ -39,13 +40,14 @@ private:
 	double boundarySpeed;
 	double boundaryPressure;
 	vector<Vec2> vel;
-	vector<double> pressure;
-	vector<double> divergence;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
 	double pZero;
+	vector<int> zeroBlocks;
 
 	void drawGridPoint(double locX, double locY);
+	void drawGridArrow(double locX, double locY, Vec2 currentVel);
+	void setUpTestCase();
 
 public:
 

@@ -27,11 +27,11 @@ const double solverAccuracy = 1e-5;
 const int solverIterations = 1000;
 
 
-class Fluid_2D  
+class Fluid2D  
 {
 public:
-    Fluid_2D(int xRes, int yRes);
-    virtual ~Fluid_2D();
+    Fluid2D(int xRes, int yRes);
+    virtual ~Fluid2D();
 
     int get_xRes()         { return xRes; };
     int get_yRes()         { return yRes; };
@@ -46,7 +46,7 @@ public:
     void toggleBoundaryCond()   { bndryCond = !bndryCond; };
     void toggleVorticity()   { addVort = !addVort; };
 
-    void step();
+    void step(vector<int> zeroBlocks);
 
 protected:
     int xRes;               /* x resolution of cell grid */
