@@ -47,6 +47,7 @@ public:
     void toggleVorticity()   { addVort = !addVort; };
 
     void step(vector<int> zeroBlocks);
+	void reset();
 
 protected:
     int xRes;               /* x resolution of cell grid */

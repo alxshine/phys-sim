@@ -22,7 +22,8 @@
 #include "Fluid2D.h"
 
 void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
-		double *yVelocity, double *field, double* tempField) {
+		double *yVelocity, double *field, double* tempField,
+		double defaultValue) {
 	// Task 1
 	for (int y = 0; y < yRes; y++) {
 		for (int x = 0; x < xRes; x++) {
@@ -32,27 +33,31 @@ void AdvectWithSemiLagrange(int xRes, int yRes, double dt, double *xVelocity,
 			double oldX = x - xVelocity[coord] * dt * xRes;
 			double oldY = y - yVelocity[coord] * dt * yRes;
 
-			//interpolate quantity from neighbors of old coordinates
-			int leftCoord = (int) oldX;
-			int rightCoord = leftCoord + 1;
-			int bottomCoord = (int) oldY;
-			int topCoord = bottomCoord + 1;
+			if (oldX < 0)
+				tempField[coord] = defaultValue;
+			else {
+				//interpolate quantity from neighbors of old coordinates
+				int leftCoord = (int) oldX;
+				int rightCoord = leftCoord + 1;
+				int bottomCoord = (int) oldY;
+				int topCoord = bottomCoord + 1;
 
-			double bottomLeft = field[bottomCoord * xRes + leftCoord];
-			double bottomRight = field[bottomCoord * xRes + rightCoord];
-			double topLeft = field[topCoord * xRes + leftCoord];
-			double topRight = field[topCoord * xRes + rightCoord];
+				double bottomLeft = field[bottomCoord * xRes + leftCoord];
+				double bottomRight = field[bottomCoord * xRes + rightCoord];
+				double topLeft = field[topCoord * xRes + leftCoord];
+				double topRight = field[topCoord * xRes + rightCoord];
 
-			double xRatio = oldX - leftCoord;
-			double yRatio = oldY - bottomCoord;
+				double xRatio = oldX - leftCoord;
+				double yRatio = oldY - bottomCoord;
 
-			double leftInterpolation = topLeft * yRatio
-					+ bottomLeft * (1 - yRatio);
-			double rightInterpolation = topRight * yRatio
-					+ bottomRight * (1 - yRatio);
+				double leftInterpolation = topLeft * yRatio
+						+ bottomLeft * (1 - yRatio);
+				double rightInterpolation = topRight * yRatio
+						+ bottomRight * (1 - yRatio);
 
-			tempField[coord] = rightInterpolation * xRatio
-					+ leftInterpolation * (1 - xRatio);
+				tempField[coord] = rightInterpolation * xRatio
+						+ leftInterpolation * (1 - xRatio);
+			}
 		}
 	}
 }
@@ -72,10 +77,6 @@ void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 				double below = y > 0 ? pressure[c - xRes] : 0;
 				double left = x > 0 ? pressure[c - 1] : 0;
 				double right = x < xRes - 1 ? pressure[c + 1] : 0;
-//				double above = pressure[c + xRes];
-//				double below = pressure[c - xRes];
-//				double left = pressure[c - 1];
-//				double right = pressure[c + 1];
 
 				pressure[c] = (h * h * divergence[c] + above + below + left
 						+ right) / 4;
@@ -92,10 +93,6 @@ void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 				double below = y > 0 ? pressure[c - xRes] : 0;
 				double left = x > 0 ? pressure[c - 1] : 0;
 				double right = x < xRes - 1 ? pressure[c + 1] : 0;
-//				double above = pressure[c + xRes];
-//				double below = pressure[c - xRes];
-//				double left = pressure[c - 1];
-//				double right = pressure[c + 1];
 
 				double rTemp = h * h * divergence[c] + above + below + left
 						+ right - 4 * pressure[c];

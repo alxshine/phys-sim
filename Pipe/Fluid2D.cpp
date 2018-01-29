@@ -26,7 +26,8 @@
 /* External functions for implementing advection, the pressure
  solver, and the correction of velocities */
 extern void AdvectWithSemiLagrange(int xRes, int yRes, double dt,
-		double* xVelocity, double* yVelocity, double *field, double *tempField);
+		double* xVelocity, double* yVelocity, double *field, double *tempField,
+		double defaultValue);
 
 extern void SolvePoisson(int xRes, int yRes, int iterations, double accuracy,
 		double* pressure, double* divergence);
@@ -61,21 +62,7 @@ Fluid2D::Fluid2D(int _xRes, int _yRes) :
 	yCurlGrad = new double[totalCells];
 
 	/* Initialize fields */
-	for (int i = 0; i < totalCells; i++) {
-		divergence[i] = 0.0;
-		pressure[i] = 1.0;
-		xVelocity[i] = 2.0;
-		yVelocity[i] = 0.0;
-		xVelocityTemp[i] = 0.0;
-		yVelocityTemp[i] = 0.0;
-		xForce[i] = 0.0;
-		yForce[i] = 0.0;
-		density[i] = 0.0;
-		densityTemp[i] = 0.0;
-		curl[i] = 0.0;
-		xCurlGrad[i] = 0.0;
-		yCurlGrad[i] = 0.0;
-	}
+	reset();
 }
 
 Fluid2D::~Fluid2D() {
@@ -109,40 +96,64 @@ Fluid2D::~Fluid2D() {
 
 /*----------------------------------------------------------------*/
 
+void Fluid2D::reset() {
+	/* Initialize fields */
+	for (int i = 0; i < totalCells; i++) {
+		divergence[i] = 0.0;
+		pressure[i] = 1.0;
+		xVelocity[i] = 2.0;
+		yVelocity[i] = 0.0;
+		xVelocityTemp[i] = 0.0;
+		yVelocityTemp[i] = 0.0;
+		xForce[i] = 0.0;
+		yForce[i] = 0.0;
+		density[i] = 0.0;
+		densityTemp[i] = 0.0;
+		curl[i] = 0.0;
+		xCurlGrad[i] = 0.0;
+		yCurlGrad[i] = 0.0;
+	}
+	//set the boundaries to their designated values
+	for (int y = 1; y < yRes - 1; y++) {
+		int leftCoord = y * xRes;
+		int rightCoord = leftCoord + xRes - 1;
+		pressure[leftCoord] = pressure[rightCoord] = 1.;
+		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
+	}
+}
+
 /*------------------------------------------------------------------
  | Time step for solving the Euler flow equations using operator
  | splitting
  ------------------------------------------------------------------*/
 
 void Fluid2D::step(vector<int> zeroBlocks) {
-
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
-			xVelocityTemp);
+			xVelocityTemp, 2.);
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, yVelocity,
-			yVelocityTemp);
+			yVelocityTemp, 0.);
 
 	/* Copy/update advected fields */
 	copyFields();
 
-	/* Zero the correct blocks */
+	/* Zero the obstacle blocks */
 	for (int index : zeroBlocks) {
 		int x = index % xRes;
 		int y = index / xRes;
 
-		xVelocity[y*xRes + x] = 0;
-		xVelocity[y*xRes + x + 1] = 0;
-		xVelocity[(y+1)*xRes + x] = 0;
-		xVelocity[(y+1)*xRes + x + 1] = 0;
+		xVelocity[y * xRes + x] = 0;
+		xVelocity[y * xRes + x + 1] = 0;
+		xVelocity[(y + 1) * xRes + x] = 0;
+		xVelocity[(y + 1) * xRes + x + 1] = 0;
 
-		yVelocity[y*xRes + x] = 0;
-		yVelocity[y*xRes + x + 1] = 0;
-		yVelocity[(y+1)*xRes + x] = 0;
-		yVelocity[(y+1)*xRes + x + 1] = 0;
+		yVelocity[y * xRes + x] = 0;
+		yVelocity[y * xRes + x + 1] = 0;
+		yVelocity[(y + 1) * xRes + x] = 0;
+		yVelocity[(y + 1) * xRes + x + 1] = 0;
 	}
 
 	/* Solve for pressure, ensuring divergence-free velocity field */
 	solvePressure();
-
 	totalSteps++;
 }
 
@@ -155,11 +166,14 @@ void Fluid2D::solvePressure() {
 	setZeroY(yVelocity);
 	setZeroY(xVelocity);
 
-	//test what happens when zeroing a certain cell
-//	int zeroIndices[] = {52, 53, 72, 73, 112, 113, 132, 133};
-//	for(int i =0; i<4; i++){
-//		yVelocity[zeroIndices[i]] = 0;
-//		xVelocity[zeroIndices[i]] = 0;
+	//set the boundaries to their designated values
+	//TODO: look into how to correctly enforce the input and output flow speed
+//	for (int y = 1; y < yRes - 1; y++) {
+//		int leftCoord = y * xRes;
+//		int rightCoord = leftCoord + xRes - 1;
+//
+//		pressure[leftCoord] = pressure[rightCoord] = 1.;
+//		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
 //	}
 
 	/* Compute velocity field divergence */

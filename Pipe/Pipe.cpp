@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 Scene scene;
+bool needToRun = true;
 
 void Reshape(int width, int height) {
 	glViewport(0, 0, width, height);
@@ -28,7 +29,10 @@ void Keyboard(unsigned char key, int x, int y) {
 }
 
 void Simulate() {
-	scene.Solve(1);
+	if (needToRun) {
+		scene.Solve(100);
+		needToRun = false;
+	}
 }
 
 void Display() {
@@ -41,8 +45,7 @@ void Display() {
 	glutPostRedisplay();
 	glutSwapBuffers();
 
-	//prevent it from looping nonstop
-	sleep(1);
+	sleep(0.1);
 }
 
 void Init(void) {

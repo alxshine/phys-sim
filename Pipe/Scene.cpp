@@ -21,7 +21,8 @@ using namespace std;
 
 Scene::Scene(void) :
 		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
-				-2), leftBorder(-2), crossHalfLength(0.02) {
+				-2), leftBorder(-2), crossHalfLength(0.02), fluid(resolutionX,
+				resolutionY) {
 	setUpTestCase();
 	Init();
 	PrintSettings();
@@ -35,8 +36,7 @@ Scene::~Scene(void) {
 }
 
 void Scene::setUpTestCase() {
-	//long narrow chain bottom, also the narrow part
-	zeroBlocks.push_back(30);
+	//long narrow chain bottom, also the narrow passages
 	zeroBlocks.push_back(51);
 	zeroBlocks.push_back(72);
 	zeroBlocks.push_back(92);
@@ -92,14 +92,7 @@ void Scene::Init(void) {
 
 }
 
-void Scene::Update() {
-
-}
-
 void Scene::Solve(int iterations) {
-
-	Fluid2D fluid(resolutionX, resolutionY);
-
 	for (int i = 0; i < iterations; i++)
 		fluid.step(zeroBlocks);
 
@@ -206,21 +199,51 @@ void Scene::Render(void) {
 	//draw the arrows for velocity
 	glColor3f(0.4, 0.4, 0.8);
 
-	for (int j = 1; j < resolutionY - 1; j++) {
+	for (int j = 0; j < resolutionY; j++) {
 		double locY = bottomBorder + yStep * j;
 		for (int i = 0; i < resolutionX; i++) {
 			double locX = leftBorder + xStep * i;
 			Vec2 currentVel = vel[j * resolutionX + i];
-			if (currentVel.isZero())
-				continue;
+			bool draw = true;
 
-			//check if we would be drawing over an obstacle
-			int index = j * resolutionX + i;
-			if (find(zeroBlocks.begin(), zeroBlocks.end(), index)
-					!= zeroBlocks.end())
-				continue;
+			//check if we would be drawing into an obstacle
+			for (int index : zeroBlocks) {
+				int blockX = index % resolutionX;
+				int blockY = index / resolutionY;
 
-			drawGridArrow(locX, locY, currentVel);
+				if (blockY == j) {
+					if (blockX == i) {
+						//bottom left corner
+						if (currentVel.x > 0 && currentVel.y > 0) {
+							draw = false;
+							break;
+						}
+					} else if (blockX + 1 == i) {
+						//bottom right corner
+						if (currentVel.x < 0 && currentVel.y > 0) {
+							draw = false;
+							break;
+						}
+					}
+				} else if (blockY + 1 == j) {
+					if (blockX == i) {
+						//top left corner
+						if (currentVel.x > 0 && currentVel.y < 0) {
+							draw = false;
+							break;
+						}
+					} else if (blockX + 1 == i) {
+						//top right corner
+						if (currentVel.x < 0 && currentVel.y < 0) {
+							draw = false;
+							break;
+						}
+					}
+				}
+			}
+
+			if (draw)
+				drawGridArrow(locX, locY, currentVel);
 		}
 	}
 }

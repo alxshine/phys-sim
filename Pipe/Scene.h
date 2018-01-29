@@ -40,6 +40,7 @@ private:
 	double boundarySpeed;
 	double boundaryPressure;
 	vector<Vec2> vel;
+	Fluid2D fluid;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
 	double pZero;
