@@ -62,15 +62,9 @@ public:
 
 	void PrintSettings(void);
 	void Render(); /* Draw scene */
-
-	void Update(); /* Execute time step */
+	void HandleMouse(double x, double y);
 
 	void Solve(int iterations);
-	void SolvePressure(int iterations);
-
-	void UpdateVelocity(void);
-
-	void ComputeDivergence(void);
 
 };
 

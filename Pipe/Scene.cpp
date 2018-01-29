@@ -247,3 +247,28 @@ void Scene::Render(void) {
 		}
 	}
 }
+
+void Scene::HandleMouse(double x, double y) {
+	//check if the user actually clicked inside the grid
+	if (x < leftBorder || x > rightBorder)
+		return;
+	if (y < bottomBorder || y > topBorder)
+		return;
+
+	//calculate the position of the click on the grid
+	double xStep = (rightBorder - leftBorder) / (resolutionX - 1);
+	double yStep = (topBorder - bottomBorder) / (resolutionY - 1);
+
+	x -= leftBorder;
+	y -= bottomBorder;
+
+	int gridX = x / xStep;
+	int gridY = y / yStep;
+	int index = gridY * resolutionX + gridX;
+
+	//check if the clicked block is already an obstacle
+	if (find(zeroBlocks.begin(), zeroBlocks.end(), index) != zeroBlocks.end())
+		return;
+
+	zeroBlocks.emplace_back(index);
+}

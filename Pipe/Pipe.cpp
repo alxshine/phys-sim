@@ -15,9 +15,12 @@
 
 Scene scene;
 bool needToRun = true;
+int winWidth, winHeight;
 
 void Reshape(int width, int height) {
 	glViewport(0, 0, width, height);
+	winWidth = width;
+	winHeight = height;
 }
 
 void Idle(void) {
@@ -26,6 +29,16 @@ void Idle(void) {
 
 void Keyboard(unsigned char key, int x, int y) {
 
+}
+
+void Mouse(int button, int state, int x, int y) {
+	//calculate position in projection space
+	double projectionX = (x - winWidth / 2) / (double) winWidth * 6;
+	//the origin is in the top left corner, so y has to be reversed
+	double projectionY = (winHeight / 2 - y) / (double) winWidth * 6;
+
+	scene.HandleMouse(projectionX, projectionY);
+	needToRun = true;
 }
 
 void Simulate() {
@@ -74,6 +87,7 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(Display);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
+	glutMouseFunc(Mouse);
 	glutIdleFunc(Idle);
 
 	glutMainLoop();
