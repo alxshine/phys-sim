@@ -37,7 +37,7 @@ extern void CorrectVelocities(int xRes, int yRes, double dt,
 
 Fluid2D::Fluid2D(int _xRes, int _yRes) :
 		xRes(_xRes), yRes(_yRes) {
-	dt = 0.1; /* Time step */
+	dt = 0.05; /* Time step */
 	totalSteps = 0;
 	bndryCond = 1;
 	addVort = 0;
@@ -114,12 +114,7 @@ void Fluid2D::reset() {
 		yCurlGrad[i] = 0.0;
 	}
 	//set the boundaries to their designated values
-	for (int y = 1; y < yRes - 1; y++) {
-		int leftCoord = y * xRes;
-		int rightCoord = leftCoord + xRes - 1;
-		pressure[leftCoord] = pressure[rightCoord] = 1.;
-		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
-	}
+	enforceBoundaries();
 }
 
 /*------------------------------------------------------------------
@@ -137,6 +132,17 @@ void Fluid2D::step(vector<int> zeroBlocks) {
 	copyFields();
 
 	/* Zero the obstacle blocks */
+	zeroObstacles(zeroBlocks);
+
+	/* Solve for pressure, ensuring divergence-free velocity field */
+	solvePressure();
+	totalSteps++;
+}
+
+
+void Fluid2D::zeroObstacles(vector<int> zeroBlocks){
+
+	/* Zero the obstacle blocks */
 	for (int index : zeroBlocks) {
 		int x = index % xRes;
 		int y = index / xRes;
@@ -152,9 +158,6 @@ void Fluid2D::step(vector<int> zeroBlocks) {
 		yVelocity[(y + 1) * xRes + x + 1] = 0;
 	}
 
-	/* Solve for pressure, ensuring divergence-free velocity field */
-	solvePressure();
-	totalSteps++;
 }
 
 /*----------------------------------------------------------------*/
@@ -168,23 +171,29 @@ void Fluid2D::solvePressure() {
 
 	//set the boundaries to their designated values
 	//TODO: look into how to correctly enforce the input and output flow speed
-//	for (int y = 1; y < yRes - 1; y++) {
-//		int leftCoord = y * xRes;
-//		int rightCoord = leftCoord + xRes - 1;
-//
-//		pressure[leftCoord] = pressure[rightCoord] = 1.;
-//		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
-//	}
+	enforceBoundaries();
 
 	/* Compute velocity field divergence */
 	computeDivergence();
 
 	copyBorderX(pressure);
 	copyBorderY(pressure);
-
+	
 	/* Solve for pressures and make field divergence-free */
 	SolvePoisson(xRes, yRes, iterations, accuracy, pressure, divergence);
 	CorrectVelocities(xRes, yRes, dt, pressure, xVelocity, yVelocity);
+
+	//enforceBoundaries();
+}
+
+void Fluid2D::enforceBoundaries(){
+	for (int y = 1; y < yRes - 1; y++) {
+		int leftCoord = y * xRes;
+		int rightCoord = leftCoord + xRes - 1;
+
+		pressure[leftCoord] = pressure[rightCoord] = 1.;
+		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
+	}
 }
 
 void Fluid2D::computeDivergence() {

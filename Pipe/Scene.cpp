@@ -96,6 +96,8 @@ void Scene::Solve(int iterations) {
 	for (int i = 0; i < iterations; i++)
 		fluid.step(zeroBlocks);
 
+	fluid.zeroObstacles(zeroBlocks);
+
 	double* xVel = fluid.get_xVelocity();
 	double* yVel = fluid.get_yVelocity();
 

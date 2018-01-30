@@ -47,6 +47,7 @@ public:
     void toggleVorticity()   { addVort = !addVort; };
 
     void step(vector<int> zeroBlocks);
+    void zeroObstacles(vector<int> zeroBlocks);
 	void reset();
 
 protected:
@@ -77,6 +78,8 @@ protected:
     void computeDivergence();
     void copyFields();
     void solvePressure();
+    void enforceBoundaries();
+
 
     void setNeumannX(double* field);
     void setNeumannY(double* field);
