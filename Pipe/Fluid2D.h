@@ -38,6 +38,7 @@ public:
     double* get_density()   { return density; };
     double* get_xVelocity() {return xVelocity; };
     double* get_yVelocity() {return yVelocity; };
+    double* get_pressure() {return pressure; };
 
     int iterations;  
     double accuracy; 

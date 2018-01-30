@@ -170,7 +170,6 @@ void Fluid2D::solvePressure() {
 	setZeroY(xVelocity);
 
 	//set the boundaries to their designated values
-	//TODO: look into how to correctly enforce the input and output flow speed
 	enforceBoundaries();
 
 	/* Compute velocity field divergence */
@@ -191,7 +190,7 @@ void Fluid2D::enforceBoundaries(){
 		int leftCoord = y * xRes;
 		int rightCoord = leftCoord + xRes - 1;
 
-		pressure[leftCoord] = pressure[rightCoord] = 1.;
+		pressure[leftCoord] = 1.;
 		xVelocity[leftCoord] = xVelocity[rightCoord] = 2.;
 	}
 }

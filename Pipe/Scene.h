@@ -40,6 +40,7 @@ private:
 	double boundarySpeed;
 	double boundaryPressure;
 	vector<Vec2> vel;
+	vector<double> pressure;
 	Fluid2D fluid;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
@@ -48,7 +49,16 @@ private:
 
 	void drawGridPoint(double locX, double locY);
 	void drawGridArrow(double locX, double locY, Vec2 currentVel);
+	void CreatePressureVertex(double locX, double locY, double val,
+			double maxValue);
+	void HSV2RGB(double h, double s, double v, double &r, double &g,
+			double &b);
 	void setUpTestCase();
+	void renderPipe();
+	void renderPressure(double yStep, double xStep);
+	void renderGrid(double yStep, double xStep);
+	void renderObstacles(double xStep, double yStep);
+	void renderVelocities(double yStep, double xStep);
 
 public:
 
@@ -57,8 +67,6 @@ public:
 	Scene(int argc, char *argv[]);
 
 	~Scene(void);
-
-	void Init(void);
 
 	void PrintSettings(void);
 	void Render(); /* Draw scene */

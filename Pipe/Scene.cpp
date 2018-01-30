@@ -23,8 +23,10 @@ Scene::Scene(void) :
 		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
 				-2), leftBorder(-2), crossHalfLength(0.02), fluid(resolutionX,
 				resolutionY) {
+	vel.reserve(resolutionX * resolutionY);
+	pressure.reserve(resolutionX * resolutionY);
+
 	setUpTestCase();
-	Init();
 	PrintSettings();
 }
 
@@ -78,20 +80,6 @@ void Scene::PrintSettings(void) {
 	cerr << "\t-resolution " << resolutionX << "x" << resolutionY << endl;
 }
 
-/******************************************************************
- *
- * Init
- *
- * Setup 2D simulation scenes; geometry for all three cases is
- * hard-coded
- *
- *******************************************************************/
-
-void Scene::Init(void) {
-	vel.reserve(resolutionX * resolutionY);
-
-}
-
 void Scene::Solve(int iterations) {
 	for (int i = 0; i < iterations; i++)
 		fluid.step(zeroBlocks);
@@ -100,10 +88,12 @@ void Scene::Solve(int iterations) {
 
 	double* xVel = fluid.get_xVelocity();
 	double* yVel = fluid.get_yVelocity();
+	double* p = fluid.get_pressure();
 
 	for (int i = 0; i < resolutionX * resolutionY; i++) {
 		vel[i].x = xVel[i];
 		vel[i].y = yVel[i];
+		pressure[i] = p[i];
 	}
 
 }
@@ -153,7 +143,29 @@ void Scene::drawGridArrow(double locX, double locY, Vec2 currentVel) {
 	glEnd();
 }
 
-void Scene::Render(void) {
+void Scene::CreatePressureVertex(double locX, double locY, double val,
+		double maxValue) {
+	double s = 1.0;
+	double v = 1.0;
+
+	if (val < .0) {
+		val = .0;
+		v = .0;
+	}
+	if (val > 1.) {
+		val = 1.;
+		v = 359.;
+	}
+
+	double h = (1. - val) * 240;
+	double r, g, b;
+	r = g = b = 0.;
+	HSV2RGB(h, s, v, r, g, b);
+	glColor3f(r, g, b);
+	glVertex2d(locX, locY);
+}
+
+void Scene::renderPipe() {
 	//render the pipe itself
 	glColor3f(0.5, 0.5, 0.5);
 	glLineWidth(5);
@@ -161,27 +173,47 @@ void Scene::Render(void) {
 	glVertex2d(leftBorder, topBorder);
 	glVertex2d(rightBorder, topBorder);
 	glEnd();
-
 	glBegin(GL_LINES);
 	glVertex2d(leftBorder, bottomBorder);
 	glVertex2d(rightBorder, bottomBorder);
 	glEnd();
+}
 
+void Scene::renderPressure(double yStep, double xStep) {
+	//render the pressure as heatmap
+	double maxValue = *max_element(pressure.begin(), pressure.end());
+	glBegin(GL_QUADS);
+	for (int j = 0; j < resolutionY - 1; j++) {
+		double locY = bottomBorder + yStep * j;
+		for (int i = 0; i < resolutionX - 1; i++) {
+			double locX = leftBorder + xStep * i;
+			int index = j * resolutionX + i;
+			CreatePressureVertex(locX, locY, pressure[index], maxValue);
+			CreatePressureVertex(locX + xStep, locY, pressure[index + 1],
+					maxValue);
+			CreatePressureVertex(locX + xStep, locY + yStep,
+					pressure[index + resolutionX + 1], maxValue);
+			CreatePressureVertex(locX, locY + yStep,
+					pressure[index + resolutionX], maxValue);
+		}
+	}
+	glEnd();
+}
+
+void Scene::renderGrid(double yStep, double xStep) {
 	//render the grid with little crosses
 	glColor3f(0.7, 0.7, 0.7);
 	glLineWidth(1);
-	//we need to divide by resolution-1 because otherwise the array and visualization shape would not match
-	double xStep = (rightBorder - leftBorder) / (resolutionX - 1);
-	double yStep = (topBorder - bottomBorder) / (resolutionY - 1);
 	for (int j = 0; j < resolutionY; j++) {
 		double locY = bottomBorder + yStep * j;
 		for (int i = 0; i < resolutionX; i++) {
 			double locX = leftBorder + xStep * i;
-
 			drawGridPoint(locX, locY);
 		}
 	}
+}
 
+void Scene::renderObstacles(double xStep, double yStep) {
 	//draw the obstacles
 	glColor3f(0.6, 0.6, 0.6);
 	for (int index : zeroBlocks) {
@@ -189,7 +221,6 @@ void Scene::Render(void) {
 		double locX = leftBorder + xStep * x;
 		int y = index / resolutionX;
 		double locY = bottomBorder + yStep * y;
-
 		glBegin(GL_QUADS);
 		glVertex2d(locX, locY);
 		glVertex2d(locX + xStep, locY);
@@ -197,22 +228,21 @@ void Scene::Render(void) {
 		glVertex2d(locX, locY + yStep);
 		glEnd();
 	}
+}
 
+void Scene::renderVelocities(double yStep, double xStep) {
 	//draw the arrows for velocity
 	glColor3f(0.4, 0.4, 0.8);
-
 	for (int j = 0; j < resolutionY; j++) {
 		double locY = bottomBorder + yStep * j;
 		for (int i = 0; i < resolutionX; i++) {
 			double locX = leftBorder + xStep * i;
 			Vec2 currentVel = vel[j * resolutionX + i];
 			bool draw = true;
-
 			//check if we would be drawing into an obstacle
 			for (int index : zeroBlocks) {
 				int blockX = index % resolutionX;
 				int blockY = index / resolutionY;
-
 				if (blockY == j) {
 					if (blockX == i) {
 						//bottom left corner
@@ -243,21 +273,34 @@ void Scene::Render(void) {
 					}
 				}
 			}
-
 			if (draw)
 				drawGridArrow(locX, locY, currentVel);
 		}
 	}
 }
 
+void Scene::Render(void) {
+	//we need to divide by resolution-1 because otherwise the array and visualization shape would not match
+	double xStep = (rightBorder - leftBorder) / (resolutionX - 1);
+	double yStep = (topBorder - bottomBorder) / (resolutionY - 1);
+
+	//render the pipe itself
+	renderPipe();
+
+	renderPressure(yStep, xStep);
+	renderGrid(yStep, xStep);
+	renderObstacles(xStep, yStep);
+	renderVelocities(yStep, xStep);
+}
+
 void Scene::HandleMouse(double x, double y) {
-	//check if the user actually clicked inside the grid
+//check if the user actually clicked inside the grid
 	if (x < leftBorder || x > rightBorder)
 		return;
 	if (y < bottomBorder || y > topBorder)
 		return;
 
-	//calculate the position of the click on the grid
+//calculate the position of the click on the grid
 	double xStep = (rightBorder - leftBorder) / (resolutionX - 1);
 	double yStep = (topBorder - bottomBorder) / (resolutionY - 1);
 
@@ -268,9 +311,58 @@ void Scene::HandleMouse(double x, double y) {
 	int gridY = y / yStep;
 	int index = gridY * resolutionX + gridX;
 
-	//check if the clicked block is already an obstacle
+//check if the clicked block is already an obstacle
 	if (find(zeroBlocks.begin(), zeroBlocks.end(), index) != zeroBlocks.end())
 		return;
 
 	zeroBlocks.emplace_back(index);
+}
+
+void Scene::HSV2RGB(double h, double s, double v, double &r, double &g,
+		double &b) {
+	h /= 360.0;
+	if (fabs(h - 1.0) < 0.000001)
+		h = 0.0;
+
+	h *= 6.0;
+
+	int i = floor(h);
+
+	double f = h - i;
+	double p = v * (1.0 - s);
+	double q = v * (1.0 - (s * f));
+	double t = v * (1.0 - (s * (1.0 - f)));
+
+	switch (i) {
+	case 0:
+		r = v;
+		g = t;
+		b = p;
+		break;
+	case 1:
+		r = q;
+		g = v;
+		b = p;
+		break;
+	case 2:
+		r = p;
+		g = v;
+		b = t;
+		break;
+	case 3:
+		r = p;
+		g = q;
+		b = v;
+		break;
+	case 4:
+		r = t;
+		g = p;
+		b = v;
+		break;
+	case 5:
+		r = v;
+		g = p;
+		b = q;
+		break;
+	}
 }
