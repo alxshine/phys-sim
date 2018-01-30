@@ -50,7 +50,7 @@ private:
 	void drawGridPoint(double locX, double locY);
 	void drawGridArrow(double locX, double locY, Vec2 currentVel);
 	void CreatePressureVertex(double locX, double locY, double val,
-			double maxValue);
+			double maxValue, double minValue);
 	void HSV2RGB(double h, double s, double v, double &r, double &g,
 			double &b);
 	void setUpTestCase();

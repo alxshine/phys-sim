@@ -23,8 +23,8 @@ Scene::Scene(void) :
 		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
 				-2), leftBorder(-2), crossHalfLength(0.02), fluid(resolutionX,
 				resolutionY) {
-	vel.reserve(resolutionX * resolutionY);
-	pressure.reserve(resolutionX * resolutionY);
+	vel.resize(resolutionX * resolutionY);
+	pressure.resize(resolutionX * resolutionY);
 
 	setUpTestCase();
 	PrintSettings();
@@ -144,18 +144,12 @@ void Scene::drawGridArrow(double locX, double locY, Vec2 currentVel) {
 }
 
 void Scene::CreatePressureVertex(double locX, double locY, double val,
-		double maxValue) {
+		double maxValue, double minValue) {
 	double s = 1.0;
 	double v = 1.0;
 
-	if (val < .0) {
-		val = .0;
-		v = .0;
-	}
-	if (val > 1.) {
-		val = 1.;
-		v = 359.;
-	}
+	val -= minValue;
+	val /= maxValue - minValue;
 
 	double h = (1. - val) * 240;
 	double r, g, b;
@@ -182,19 +176,22 @@ void Scene::renderPipe() {
 void Scene::renderPressure(double yStep, double xStep) {
 	//render the pressure as heatmap
 	double maxValue = *max_element(pressure.begin(), pressure.end());
+	double minValue = *min_element(pressure.begin(), pressure.end());
+
 	glBegin(GL_QUADS);
 	for (int j = 0; j < resolutionY - 1; j++) {
 		double locY = bottomBorder + yStep * j;
 		for (int i = 0; i < resolutionX - 1; i++) {
 			double locX = leftBorder + xStep * i;
 			int index = j * resolutionX + i;
-			CreatePressureVertex(locX, locY, pressure[index], maxValue);
+			CreatePressureVertex(locX, locY, pressure[index], maxValue,
+					minValue);
 			CreatePressureVertex(locX + xStep, locY, pressure[index + 1],
-					maxValue);
+					maxValue, minValue);
 			CreatePressureVertex(locX + xStep, locY + yStep,
-					pressure[index + resolutionX + 1], maxValue);
+					pressure[index + resolutionX + 1], maxValue, minValue);
 			CreatePressureVertex(locX, locY + yStep,
-					pressure[index + resolutionX], maxValue);
+					pressure[index + resolutionX], maxValue, minValue);
 		}
 	}
 	glEnd();
