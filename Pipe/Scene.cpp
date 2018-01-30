@@ -26,7 +26,7 @@ Scene::Scene(void) :
 	vel.resize(resolutionX * resolutionY);
 	pressure.resize(resolutionX * resolutionY);
 
-	setUpTestCase();
+//	setUpTestCase();
 	PrintSettings();
 }
 
@@ -276,7 +276,7 @@ void Scene::renderVelocities(double yStep, double xStep) {
 	}
 }
 
-void Scene::Render(void) {
+void Scene::Render(bool renderP) {
 	//we need to divide by resolution-1 because otherwise the array and visualization shape would not match
 	double xStep = (rightBorder - leftBorder) / (resolutionX - 1);
 	double yStep = (topBorder - bottomBorder) / (resolutionY - 1);
@@ -284,7 +284,8 @@ void Scene::Render(void) {
 	//render the pipe itself
 	renderPipe();
 
-	renderPressure(yStep, xStep);
+	if (renderP)
+		renderPressure(yStep, xStep);
 	renderGrid(yStep, xStep);
 	renderObstacles(xStep, yStep);
 	renderVelocities(yStep, xStep);

@@ -69,7 +69,7 @@ public:
 	~Scene(void);
 
 	void PrintSettings(void);
-	void Render(); /* Draw scene */
+	void Render(bool renderPressure); /* Draw scene */
 	void HandleMouse(double x, double y);
 
 	void Solve(int iterations);
