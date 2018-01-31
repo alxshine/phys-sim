@@ -47,7 +47,7 @@ public:
     void toggleBoundaryCond()   { bndryCond = !bndryCond; };
     void toggleVorticity()   { addVort = !addVort; };
 
-    void step(vector<int> zeroBlocks);
+    void step(vector<int> zeroBlocks, bool enforce);
     void zeroObstacles(vector<int> zeroBlocks);
 	void reset();
 

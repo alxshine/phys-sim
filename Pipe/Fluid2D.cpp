@@ -37,7 +37,7 @@ extern void CorrectVelocities(int xRes, int yRes, double dt,
 
 Fluid2D::Fluid2D(int _xRes, int _yRes) :
 		xRes(_xRes), yRes(_yRes) {
-	dt = 0.05; /* Time step */
+	dt = 0.15; /* Time step */
 	totalSteps = 0;
 	bndryCond = 1;
 	addVort = 0;
@@ -101,7 +101,7 @@ void Fluid2D::reset() {
 	for (int i = 0; i < totalCells; i++) {
 		divergence[i] = 0.0;
 		pressure[i] = 1.0;
-		xVelocity[i] = 2.0;
+		xVelocity[i] = 0.0;
 		yVelocity[i] = 0.0;
 		xVelocityTemp[i] = 0.0;
 		yVelocityTemp[i] = 0.0;
@@ -122,7 +122,7 @@ void Fluid2D::reset() {
  | splitting
  ------------------------------------------------------------------*/
 
-void Fluid2D::step(vector<int> zeroBlocks) {
+void Fluid2D::step(vector<int> zeroBlocks, bool enforce) {
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
 			xVelocityTemp, 2.);
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, yVelocity,
@@ -130,6 +130,9 @@ void Fluid2D::step(vector<int> zeroBlocks) {
 
 	/* Copy/update advected fields */
 	copyFields();
+
+	if(enforce)
+		enforceBoundaries();
 
 	/* Zero the obstacle blocks */
 	zeroObstacles(zeroBlocks);
@@ -168,9 +171,6 @@ void Fluid2D::solvePressure() {
 	/* Set appropriate boundary conditions, we use zero slip */
 	setZeroY(yVelocity);
 	setZeroY(xVelocity);
-
-	//set the boundaries to their designated values
-	enforceBoundaries();
 
 	/* Compute velocity field divergence */
 	computeDivergence();

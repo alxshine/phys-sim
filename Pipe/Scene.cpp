@@ -26,7 +26,7 @@ Scene::Scene(void) :
 	vel.resize(resolutionX * resolutionY);
 	pressure.resize(resolutionX * resolutionY);
 
-//	setUpTestCase();
+	setUpTestCase();
 	PrintSettings();
 }
 
@@ -81,8 +81,10 @@ void Scene::PrintSettings(void) {
 }
 
 void Scene::Solve(int iterations) {
-	for (int i = 0; i < iterations; i++)
-		fluid.step(zeroBlocks);
+	for (int i = 0; i < iterations - 1; i++)
+		fluid.step(zeroBlocks, true);
+//	for (int i = 0; i < 10; i++)
+		fluid.step(zeroBlocks, false);
 
 	fluid.zeroObstacles(zeroBlocks);
 
