@@ -20,8 +20,8 @@ using namespace std;
 #include "Scene.h"
 
 Scene::Scene(void) :
-		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
-				-2), leftBorder(-2), crossHalfLength(0.02), blockSideLength(1), fluid(
+		resolutionX(40), resolutionY(40), topBorder(2), rightBorder(2), bottomBorder(
+				-2), leftBorder(-2), crossHalfLength(0.02), blockSideLength(4), fluid(
 				resolutionX, resolutionY) {
 	vel.resize(resolutionX * resolutionY);
 	pressure.resize(resolutionX * resolutionY);
@@ -95,7 +95,7 @@ void Scene::Solve(int iterations, bool scale) {
 		}
 	}
 
-	fluid.reset(zeroIndices);
+//	fluid.reset(zeroIndices);
 	for (int i = 0; i < iterations - 1; i++)
 		fluid.step(zeroIndices, true, scale);
 	fluid.step(zeroIndices, false, scale);

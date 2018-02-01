@@ -36,7 +36,6 @@ void Keyboard(unsigned char key, int x, int y) {
 		break;
 	case 's':
 		scaleVelocities = !scaleVelocities;
-		scene.Solve(100, scaleVelocities);
 		break;
 	}
 }
@@ -53,8 +52,9 @@ void Mouse(int button, int state, int x, int y) {
 
 void Simulate() {
 	if (needToRun) {
-		scene.Solve(100, scaleVelocities);
-		needToRun = false;
+		scene.Solve(1, scaleVelocities);
+		sleep(0.1);
+//		needToRun = false;
 	}
 }
 
