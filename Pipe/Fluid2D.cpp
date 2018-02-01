@@ -124,12 +124,28 @@ void Fluid2D::reset(vector<int> zeroIndices) {
 	enforceBoundaries();
 }
 
+void Fluid2D::scaleFlow(const vector<int>& zeroIndices) {
+	/* Ensure global flow stays constant by scaling the columns */
+	vector<bool> reachabilityGrid(xRes * yRes, false);
+	getReachablePoints(zeroIndices, reachabilityGrid);
+	double targetFlow = (yRes - 2) * 2.;
+	for (int x = 1; x < xRes - 1; x++) {
+		//get the flow of the current cut
+		double currentFlow = 0.;
+		for (int y = 0; y < yRes; y++)
+			currentFlow += xVelocity[y * xRes + x];
+		double scaling = targetFlow / currentFlow;
+		for (int y = 0; y < yRes; y++)
+			xVelocity[y * xRes + x] *= scaling;
+	}
+}
+
 /*------------------------------------------------------------------
  | Time step for solving the Euler flow equations using operator
  | splitting
  ------------------------------------------------------------------*/
 
-void Fluid2D::step(vector<int> zeroIndices, bool enforce) {
+void Fluid2D::step(vector<int> zeroIndices, bool enforce, bool scale) {
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
 			xVelocityTemp, 2.);
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, yVelocity,
@@ -148,22 +164,8 @@ void Fluid2D::step(vector<int> zeroIndices, bool enforce) {
 	solvePressure();
 
 	/* Ensure global flow stays constant by scaling the columns */
-	vector<bool> reachabilityGrid(xRes * yRes, false);
-	getReachablePoints(zeroIndices, reachabilityGrid);
-
-	double targetFlow = (yRes - 2) * 2.;
-	for (int x = 1; x < xRes - 1; x++) {
-		//get the flow of the current cut
-		double currentFlow = 0.;
-		for (int y = 0; y < yRes; y++)
-			currentFlow += xVelocity[y * xRes + x];
-
-		double scaling = targetFlow / currentFlow;
-
-		for (int y = 0; y < yRes; y++)
-			xVelocity[y * xRes + x] *= scaling;
-	}
-
+	if (scale)
+		scaleFlow(zeroIndices);
 	totalSteps++;
 }
 

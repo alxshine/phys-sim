@@ -78,7 +78,7 @@ void Scene::PrintSettings(void) {
 	cerr << "\t-resolution " << resolutionX << "x" << resolutionY << endl;
 }
 
-void Scene::Solve(int iterations) {
+void Scene::Solve(int iterations, bool scale) {
 	//convert the zeroBlocks into zeroIndices
 	vector<int> zeroIndices;
 	zeroIndices.reserve(zeroBlocks.size() * blockSideLength * blockSideLength);
@@ -97,8 +97,8 @@ void Scene::Solve(int iterations) {
 
 	fluid.reset(zeroIndices);
 	for (int i = 0; i < iterations - 1; i++)
-		fluid.step(zeroIndices, true);
-	fluid.step(zeroIndices, false);
+		fluid.step(zeroIndices, true, scale);
+	fluid.step(zeroIndices, false, scale);
 
 	double* xVel = fluid.get_xVelocity();
 	double* yVel = fluid.get_yVelocity();

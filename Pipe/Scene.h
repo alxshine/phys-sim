@@ -74,7 +74,7 @@ public:
 	void Render(bool renderPressure); /* Draw scene */
 	void HandleMouse(double x, double y);
 
-	void Solve(int iterations);
+	void Solve(int iterations, bool scale);
 
 };
 

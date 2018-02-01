@@ -68,7 +68,7 @@ public:
 	}
 	;
 
-	void step(vector<int> zeroBlocks, bool enforce);
+	void step(vector<int> zeroBlocks, bool enforce, bool scale);
 	void zeroObstacles(vector<int> zeroBlocks);
 	void reset(vector<int> zeroIndices);
 	void getReachablePoints(vector<int> zeroBlocks, vector<bool> retGrid);
@@ -101,6 +101,7 @@ protected:
 	void copyFields();
 	void solvePressure();
 	void enforceBoundaries();
+	void scaleFlow(const vector<int>& zeroIndices);
 
 	void setNeumannX(double* field);
 	void setNeumannY(double* field);
@@ -109,6 +110,7 @@ protected:
 
 	void copyBorderX(double* field);
 	void copyBorderY(double* field);
+
 };
 
 #endif

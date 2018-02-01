@@ -17,6 +17,7 @@ Scene scene;
 bool needToRun = true;
 int winWidth, winHeight;
 bool rendPressure = true;
+bool scaleVelocities = false;
 
 void Reshape(int width, int height) {
 	glViewport(0, 0, width, height);
@@ -32,6 +33,11 @@ void Keyboard(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'p':
 		rendPressure = !rendPressure;
+		break;
+	case 's':
+		scaleVelocities = !scaleVelocities;
+		scene.Solve(100, scaleVelocities);
+		break;
 	}
 }
 
@@ -47,7 +53,7 @@ void Mouse(int button, int state, int x, int y) {
 
 void Simulate() {
 	if (needToRun) {
-		scene.Solve(100);
+		scene.Solve(100, scaleVelocities);
 		needToRun = false;
 	}
 }
