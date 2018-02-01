@@ -44,6 +44,7 @@ private:
 	Fluid2D fluid;
 	double topBorder, rightBorder, bottomBorder, leftBorder;
 	double crossHalfLength;
+	int blockSideLength;
 	double pZero;
 	vector<int> zeroBlocks;
 
@@ -59,6 +60,7 @@ private:
 	void renderGrid(double yStep, double xStep);
 	void renderObstacles(double xStep, double yStep);
 	void renderVelocities(double yStep, double xStep);
+	bool isAlreadyInObstacle(int gridX, int gridY);
 
 public:
 

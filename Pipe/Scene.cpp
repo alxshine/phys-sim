@@ -20,13 +20,13 @@ using namespace std;
 #include "Scene.h"
 
 Scene::Scene(void) :
-		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
+		resolutionX(30), resolutionY(30), topBorder(2), rightBorder(2), bottomBorder(
 				-2), leftBorder(-2), crossHalfLength(0.02), fluid(resolutionX,
-				resolutionY) {
+				resolutionY), blockSideLength(2) {
 	vel.resize(resolutionX * resolutionY);
 	pressure.resize(resolutionX * resolutionY);
 
-	setUpTestCase();
+//	setUpTestCase();
 	PrintSettings();
 }
 
@@ -81,12 +81,25 @@ void Scene::PrintSettings(void) {
 }
 
 void Scene::Solve(int iterations) {
-	for (int i = 0; i < iterations - 1; i++)
-		fluid.step(zeroBlocks, true);
-//	for (int i = 0; i < 10; i++)
-		fluid.step(zeroBlocks, false);
+	//convert the zeroBlocks into zeroIndices
+	vector<int> zeroIndices;
+	zeroIndices.reserve(zeroBlocks.size() * blockSideLength * blockSideLength);
+	for (int block : zeroBlocks) {
+		int blockX = block % resolutionX;
+		int blockY = block / resolutionY;
+		for (int offsetX = 0; offsetX <= blockSideLength; offsetX++) {
+			for (int offsetY = 0; offsetY <= blockSideLength; offsetY++) {
+				int index = (blockY + offsetY) * resolutionX + blockX + offsetX;
+				if (find(zeroIndices.begin(), zeroIndices.end(), index)
+						== zeroIndices.end())
+					zeroIndices.emplace_back(index);
+			}
+		}
+	}
 
-	fluid.zeroObstacles(zeroBlocks);
+	for (int i = 0; i < iterations - 1; i++)
+		fluid.step(zeroIndices, true);
+	fluid.step(zeroIndices, false);
 
 	double* xVel = fluid.get_xVelocity();
 	double* yVel = fluid.get_yVelocity();
@@ -222,9 +235,10 @@ void Scene::renderObstacles(double xStep, double yStep) {
 		double locY = bottomBorder + yStep * y;
 		glBegin(GL_QUADS);
 		glVertex2d(locX, locY);
-		glVertex2d(locX + xStep, locY);
-		glVertex2d(locX + xStep, locY + yStep);
-		glVertex2d(locX, locY + yStep);
+		glVertex2d(locX + blockSideLength * xStep, locY);
+		glVertex2d(locX + blockSideLength * xStep,
+				locY + blockSideLength * yStep);
+		glVertex2d(locX, locY + blockSideLength * yStep);
 		glEnd();
 	}
 }
@@ -239,40 +253,7 @@ void Scene::renderVelocities(double yStep, double xStep) {
 			Vec2 currentVel = vel[j * resolutionX + i];
 			bool draw = true;
 			//check if we would be drawing into an obstacle
-			for (int index : zeroBlocks) {
-				int blockX = index % resolutionX;
-				int blockY = index / resolutionY;
-				if (blockY == j) {
-					if (blockX == i) {
-						//bottom left corner
-						if (currentVel.x > 0 && currentVel.y > 0) {
-							draw = false;
-							break;
-						}
-					} else if (blockX + 1 == i) {
-						//bottom right corner
-						if (currentVel.x < 0 && currentVel.y > 0) {
-							draw = false;
-							break;
-						}
-					}
-				} else if (blockY + 1 == j) {
-					if (blockX == i) {
-						//top left corner
-						if (currentVel.x > 0 && currentVel.y < 0) {
-							draw = false;
-							break;
-						}
-					} else if (blockX + 1 == i) {
-						//top right corner
-						if (currentVel.x < 0 && currentVel.y < 0) {
-							draw = false;
-							break;
-						}
-					}
-				}
-			}
-			if (draw)
+			if (!isAlreadyInObstacle(i, j))
 				drawGridArrow(locX, locY, currentVel);
 		}
 	}
@@ -293,6 +274,29 @@ void Scene::Render(bool renderP) {
 	renderVelocities(yStep, xStep);
 }
 
+bool Scene::isAlreadyInObstacle(int gridX, int gridY) {
+	//check if the clicked block is already an obstacle
+	for (int index : zeroBlocks) {
+		int blockX = index % resolutionX;
+		int blockY = index / resolutionY;
+		bool xContained = false;
+		for (int offsetX = 0; offsetX < blockSideLength; offsetX++) {
+			if (gridX == blockX + offsetX) {
+				xContained = true;
+				break;
+			}
+		}
+		if (xContained) {
+			for (int offsetY = 0; offsetY < blockSideLength; offsetY++) {
+				if (gridY == blockY + offsetY) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 void Scene::HandleMouse(double x, double y) {
 //check if the user actually clicked inside the grid
 	if (x < leftBorder || x > rightBorder)
@@ -309,13 +313,10 @@ void Scene::HandleMouse(double x, double y) {
 
 	int gridX = x / xStep;
 	int gridY = y / yStep;
-	int index = gridY * resolutionX + gridX;
 
 //check if the clicked block is already an obstacle
-	if (find(zeroBlocks.begin(), zeroBlocks.end(), index) != zeroBlocks.end())
-		return;
-
-	zeroBlocks.emplace_back(index);
+	if (!isAlreadyInObstacle(gridX, gridY))
+		zeroBlocks.emplace_back(gridY * resolutionX + gridX);
 }
 
 void Scene::HSV2RGB(double h, double s, double v, double &r, double &g,

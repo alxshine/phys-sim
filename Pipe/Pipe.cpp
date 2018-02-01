@@ -47,7 +47,7 @@ void Mouse(int button, int state, int x, int y) {
 
 void Simulate() {
 	if (needToRun) {
-		scene.Solve(1000);
+		scene.Solve(100);
 		needToRun = false;
 	}
 }

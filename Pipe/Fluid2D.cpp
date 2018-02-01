@@ -122,7 +122,7 @@ void Fluid2D::reset() {
  | splitting
  ------------------------------------------------------------------*/
 
-void Fluid2D::step(vector<int> zeroBlocks, bool enforce) {
+void Fluid2D::step(vector<int> zeroIndices, bool enforce) {
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, xVelocity,
 			xVelocityTemp, 2.);
 	AdvectWithSemiLagrange(xRes, yRes, dt, xVelocity, yVelocity, yVelocity,
@@ -131,34 +131,23 @@ void Fluid2D::step(vector<int> zeroBlocks, bool enforce) {
 	/* Copy/update advected fields */
 	copyFields();
 
-	if(enforce)
+	if (enforce)
 		enforceBoundaries();
 
 	/* Zero the obstacle blocks */
-	zeroObstacles(zeroBlocks);
+	zeroObstacles(zeroIndices);
 
 	/* Solve for pressure, ensuring divergence-free velocity field */
 	solvePressure();
 	totalSteps++;
 }
 
-
-void Fluid2D::zeroObstacles(vector<int> zeroBlocks){
+void Fluid2D::zeroObstacles(vector<int> zeroIndices) {
 
 	/* Zero the obstacle blocks */
-	for (int index : zeroBlocks) {
-		int x = index % xRes;
-		int y = index / xRes;
-
-		xVelocity[y * xRes + x] = 0;
-		xVelocity[y * xRes + x + 1] = 0;
-		xVelocity[(y + 1) * xRes + x] = 0;
-		xVelocity[(y + 1) * xRes + x + 1] = 0;
-
-		yVelocity[y * xRes + x] = 0;
-		yVelocity[y * xRes + x + 1] = 0;
-		yVelocity[(y + 1) * xRes + x] = 0;
-		yVelocity[(y + 1) * xRes + x + 1] = 0;
+	for (int index : zeroIndices) {
+		xVelocity[index] = 0;
+		yVelocity[index] = 0;
 	}
 
 }
@@ -177,7 +166,7 @@ void Fluid2D::solvePressure() {
 
 	copyBorderX(pressure);
 	copyBorderY(pressure);
-	
+
 	/* Solve for pressures and make field divergence-free */
 	SolvePoisson(xRes, yRes, iterations, accuracy, pressure, divergence);
 	CorrectVelocities(xRes, yRes, dt, pressure, xVelocity, yVelocity);
@@ -185,7 +174,7 @@ void Fluid2D::solvePressure() {
 	//enforceBoundaries();
 }
 
-void Fluid2D::enforceBoundaries(){
+void Fluid2D::enforceBoundaries() {
 	for (int y = 1; y < yRes - 1; y++) {
 		int leftCoord = y * xRes;
 		int rightCoord = leftCoord + xRes - 1;
