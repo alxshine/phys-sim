@@ -20,13 +20,13 @@ using namespace std;
 #include "Scene.h"
 
 Scene::Scene(void) :
-		resolutionX(30), resolutionY(30), topBorder(2), rightBorder(2), bottomBorder(
+		resolutionX(20), resolutionY(20), topBorder(2), rightBorder(2), bottomBorder(
 				-2), leftBorder(-2), crossHalfLength(0.02), fluid(resolutionX,
-				resolutionY), blockSideLength(2) {
+				resolutionY), blockSideLength(1) {
 	vel.resize(resolutionX * resolutionY);
 	pressure.resize(resolutionX * resolutionY);
 
-//	setUpTestCase();
+	setUpTestCase();
 	PrintSettings();
 }
 
@@ -97,6 +97,7 @@ void Scene::Solve(int iterations) {
 		}
 	}
 
+	fluid.reset(zeroIndices);
 	for (int i = 0; i < iterations - 1; i++)
 		fluid.step(zeroIndices, true);
 	fluid.step(zeroIndices, false);
@@ -251,8 +252,7 @@ void Scene::renderVelocities(double yStep, double xStep) {
 		for (int i = 0; i < resolutionX; i++) {
 			double locX = leftBorder + xStep * i;
 			Vec2 currentVel = vel[j * resolutionX + i];
-			bool draw = true;
-			//check if we would be drawing into an obstacle
+
 			if (!isAlreadyInObstacle(i, j))
 				drawGridArrow(locX, locY, currentVel);
 		}

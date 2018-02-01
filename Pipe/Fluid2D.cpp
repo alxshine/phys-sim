@@ -62,7 +62,7 @@ Fluid2D::Fluid2D(int _xRes, int _yRes) :
 	yCurlGrad = new double[totalCells];
 
 	/* Initialize fields */
-	reset();
+	reset(vector<int>());
 }
 
 Fluid2D::~Fluid2D() {
@@ -96,7 +96,7 @@ Fluid2D::~Fluid2D() {
 
 /*----------------------------------------------------------------*/
 
-void Fluid2D::reset() {
+void Fluid2D::reset(vector<int> zeroIndices) {
 	/* Initialize fields */
 	for (int i = 0; i < totalCells; i++) {
 		divergence[i] = 0.0;
@@ -113,7 +113,14 @@ void Fluid2D::reset() {
 		xCurlGrad[i] = 0.0;
 		yCurlGrad[i] = 0.0;
 	}
-	//set the boundaries to their designated values
+
+	vector<bool> reachabilityGrid(xRes * yRes, false);
+	getReachablePoints(zeroIndices, reachabilityGrid);
+	for (int index = 0; index < yRes * xRes; index++)
+		if (reachabilityGrid[index])
+			xVelocity[index] = 2;
+
+//set the boundaries to their designated values
 	enforceBoundaries();
 }
 
@@ -171,7 +178,7 @@ void Fluid2D::solvePressure() {
 	SolvePoisson(xRes, yRes, iterations, accuracy, pressure, divergence);
 	CorrectVelocities(xRes, yRes, dt, pressure, xVelocity, yVelocity);
 
-	//enforceBoundaries();
+//enforceBoundaries();
 }
 
 void Fluid2D::enforceBoundaries() {
@@ -203,6 +210,29 @@ void Fluid2D::copyFields() {
 	int size = totalCells * sizeof(double);
 	memcpy(xVelocity, xVelocityTemp, size);
 	memcpy(yVelocity, yVelocityTemp, size);
+}
+
+void Fluid2D::getReachablePoints(vector<int> zeroIndices,
+		vector<bool> retGrid) {
+	//the last row is always reachable
+	for (int y = 0; y < yRes; y++) {
+		if (find(zeroIndices.begin(), zeroIndices.end(), (y + 1) * xRes - 1)
+				== zeroIndices.end())
+			retGrid[(y + 1) * xRes - 1] = true;
+	}
+
+	for (int x = xRes - 2; x >= 0; x--) {
+		for (int y = 0; y < yRes; y++) {
+			if (find(zeroIndices.begin(), zeroIndices.end(), y * xRes + x)
+					== zeroIndices.end()) {
+				for (int offsetY = y > 0 ? -1 : 0;
+						offsetY < (y < yRes - 1 ? 1 : 0); offsetY++) {
+					if (retGrid[(y + offsetY) * xRes + x + 1])
+						retGrid[y * xRes + x] = true;
+				}
+			}
+		}
+	}
 }
 
 /*----------------------------------------------------------------*/
