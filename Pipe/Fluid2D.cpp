@@ -146,6 +146,24 @@ void Fluid2D::step(vector<int> zeroIndices, bool enforce) {
 
 	/* Solve for pressure, ensuring divergence-free velocity field */
 	solvePressure();
+
+	/* Ensure global flow stays constant by scaling the columns */
+	vector<bool> reachabilityGrid(xRes * yRes, false);
+	getReachablePoints(zeroIndices, reachabilityGrid);
+
+	double targetFlow = (yRes - 2) * 2.;
+	for (int x = 1; x < xRes - 1; x++) {
+		//get the flow of the current cut
+		double currentFlow = 0.;
+		for (int y = 0; y < yRes; y++)
+			currentFlow += xVelocity[y * xRes + x];
+
+		double scaling = targetFlow / currentFlow;
+
+		for (int y = 0; y < yRes; y++)
+			xVelocity[y * xRes + x] *= scaling;
+	}
+
 	totalSteps++;
 }
 
@@ -177,8 +195,6 @@ void Fluid2D::solvePressure() {
 	/* Solve for pressures and make field divergence-free */
 	SolvePoisson(xRes, yRes, iterations, accuracy, pressure, divergence);
 	CorrectVelocities(xRes, yRes, dt, pressure, xVelocity, yVelocity);
-
-//enforceBoundaries();
 }
 
 void Fluid2D::enforceBoundaries() {

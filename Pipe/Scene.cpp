@@ -54,12 +54,10 @@ void Scene::setUpTestCase() {
 	//single block left
 	zeroBlocks.push_back(222);
 
-	//bay top middle
+	//top middle
 	zeroBlocks.push_back(370);
 	zeroBlocks.push_back(350);
 	zeroBlocks.push_back(330);
-	zeroBlocks.push_back(329);
-	zeroBlocks.push_back(328);
 
 	//3x3 block bottom left
 	zeroBlocks.push_back(42);
